@@ -35,7 +35,7 @@ dependencies:
   platform: ^3.1.6
   url_launcher: ^6.0.9
   flutter_flavor: ^3.1.0
-  path_provider_foundation: ^2.0.0
+  path_provider_foundation: ^2.4.1
 
 dev_dependencies:
   flutter_test:
