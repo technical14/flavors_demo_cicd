@@ -81,9 +81,9 @@ jobs:
           java-version: '17'  # Specify Java as per your Android Studio (gradle-7.5-all version wise change)
           distribution: 'temurin'  # Use AdoptOpenJDK distribution
 
-      # Step 2: Set up Xcode 16.1
+      # Step 4: Set up Xcode 16.1 (correct action here)
       - name: Set up Xcode 16.1
-        uses: apple-actions/setup-xcode@v3
+        uses: actions/setup-xcode@v2  # Correct GitHub Action for setting up Xcode
         with:
           xcode-version: '16.1'
 
