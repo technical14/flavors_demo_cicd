@@ -31,15 +31,6 @@ target 'Runner' do
   use_frameworks!
   use_modular_headers!
 
-  # Specify which flavor to use
-    if ENV['FLAVOR'] == 'sandbox'
-      # Define the sandbox flavor configurations here, e.g. custom settings for this flavor
-      config = 'Sandbox'
-    else
-      # Default configuration
-      config = 'Release'
-    end
-
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 end
 
