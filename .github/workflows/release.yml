@@ -81,21 +81,19 @@ jobs:
           java-version: '17'  # Specify Java as per your Android Studio (gradle-7.5-all version wise change)
           distribution: 'temurin'  # Use AdoptOpenJDK distribution
 
-      # Step 5: flutter project clean
-      - name: Clean project
+      # Step 3: Clean Flutter project (optional, if you want a fresh build)
+      - name: Clean Flutter project
         run: flutter clean
 
-      # Step 6: Install dependencies
-      - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: |
-          flutter pub get  # Get Flutter project dependencies
+      # Step 4: Get Flutter dependencies
+      - name: Get Flutter dependencies
+        run: flutter pub get
 
       # Step 3: Install CocoaPods (with specific version)
-      - name: Install CocoaPods (specific version)
-        run: |
-          sudo gem install cocoapods -v 1.16.2  # Specify the version of CocoaPods
-          pod --version  # Verify CocoaPods installation
+#      - name: Install CocoaPods (specific version)
+#        run: |
+#          sudo gem install cocoapods -v 1.16.2  # Specify the version of CocoaPods
+#          pod --version  # Verify CocoaPods installation
 
       # Step 4: Install dependencies using CocoaPods
       - name: Install Pods
@@ -108,6 +106,33 @@ jobs:
         run: |
           sudo xcode-select --switch /Applications/Xcode_16.1.app/Contents/Developer
           sudo xcodebuild -version  # Verify installed version of Xcode
+
+      # Step 5: flutter project clean
+      - name: Clean project
+        run: flutter clean
+
+      # Caching Flutter dependencies (caching Flutter dependencies, if needed)
+      - name: Cache Flutter Dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.pub-cache
+            build/
+          key: ${{ runner.os }}-flutter-deps-${{ hashFiles('pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-deps-
+
+      # Step 6: Install dependencies
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          flutter pub get  # Get Flutter project dependencies
+
+      # Step 6: Install CocoaPods dependencies
+      - name: Install CocoaPods dependencies
+        run: |
+          cd ios
+          pod install --repo-update
 
       # Build iOS app with flavor
       - name: Build iOS app with flavor sandbox
