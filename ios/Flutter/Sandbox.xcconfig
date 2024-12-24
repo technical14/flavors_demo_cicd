@@ -1,0 +1,33 @@
+#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
+#include "Generated.xcconfig"
+// sandbox.xcconfig
+
+FLUTTER_ROOT = $(HOME)/flutter
+FLUTTER_APPLICATION_PATH = $(PROJECT_DIR)/../../
+// Flutter Build Configuration
+FLUTTER_BUILD_MODE = release
+
+// Target entry point for the "sandbox" flavor of the app
+FLUTTER_TARGET = lib/main_sandbox.dart
+
+// Build name and version number for the sandbox flavor
+FLUTTER_BUILD_NAME = 1.0.0
+FLUTTER_BUILD_NUMBER = 2
+
+// iOS Deployment Target (minimum version)
+IPHONEOS_DEPLOYMENT_TARGET = 12.0
+
+// Additional settings to customize the iOS build for the "sandbox" configuration
+OTHER_LDFLAGS = $(inherited) -framework "Flutter" -ObjC
+        SWIFT_VERSION = 5.0
+
+// Enable Bitcode (optional, but may be required for some app store submissions)
+ENABLE_BITCODE = NO
+
+// Optional: Define custom environment variables for the sandbox flavor
+// You can use these in your Dart code if needed for configuration
+FLAVOR = sandbox
+
+// Set additional custom build settings if necessary
+// These settings are specific to your project's needs
+
