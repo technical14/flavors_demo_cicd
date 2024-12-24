@@ -130,7 +130,7 @@ jobs:
 
       # Step 5: Set up Xcode (specific version)
       - name: Set up Xcode 16.1
-        uses: apple-actions/setup-xcode@v3
+        uses: technical14/flavors_demo_cicd@v3
         with:
           xcode-version: '16.1'
 
