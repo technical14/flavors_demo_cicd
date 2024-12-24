@@ -12,7 +12,7 @@ jobs:
       flavors: ${{ steps.set-flavors.outputs.flavors }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       # Step 1: Set up JSON Parsing
       # Cache jq
@@ -56,7 +56,7 @@ jobs:
     steps:
       # Step 1: Checkout the repository code
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       # Cache Flutter SDK
       - name: Cache Flutter SDK
@@ -81,23 +81,9 @@ jobs:
           java-version: '17'  # Specify Java as per your Android Studio (gradle-7.5-all version wise change)
           distribution: 'temurin'  # Use AdoptOpenJDK distribution
 
-      # Cache jq
-#      - name: Cache jq
-#        uses: actions/cache@v3
-#        with:
-#          path: /usr/bin/jq
-#          key: ${{ runner.os }}-jq-version-1.6
-#          restore-keys: |
-#            ${{ runner.os }}-jq-
-#
-#      # Step 4: Set up JSON Parsing
-#      - name: Install jq
-#        if: steps.cache.outputs.cache-hit != 'true'
-#        run: sudo apt-get install jq
-
       # Step 2: Set up Xcode 16.1
       - name: Set up Xcode 16.1
-        uses: maxim-lobanov/setup-xcode@v2
+        uses: apple-actions/setup-xcode@v3
         with:
           xcode-version: '16.1'
 
@@ -111,12 +97,6 @@ jobs:
       - name: Install Pods
         run: |
           pod install # Install the dependencies
-
-      # Step 5: Clean build directory and build the project
-      - name: Clean and Build the Project
-        run: |
-          xcodebuild clean -workspace flavor_cicd_demo/flavor_cicd_demo.xcworkspace -scheme sandbox -configuration Release
-          xcodebuild build -workspace flavor_cicd_demo/flavor_cicd_demo.xcworkspace -scheme sandbox -configuration Release
 
       # Step 5: flutter project clean
       - name: Clean project
@@ -139,91 +119,16 @@ jobs:
         run: |
           flutter pub get  # Get Flutter project dependencies
 
-#      # Build iOS app with flavor
-#      - name: Build iOS app with flavor sandbox
-#        run: |
-#          flutter build ios --release --no-codesign --flavor sandbox --target lib/EntryPoint/main_sandbox.dart --build-name=1.0.0 --build-number=2
+      # Step 5: Clean and Archive the Project
+      - name: Clean and Archive the Project
+        run: |
+          xcodebuild clean -workspace flavors_demo_cicd/flavors_demo_cicd.xcworkspace -scheme sandbox -configuration Release
+          xcodebuild archive -workspace flavors_demo_cicd/flavors_demo_cicd.xcworkspace -scheme sandbox -configuration Release -archivePath $PWD/build/sandbox.xcarchive
 
-      # Archive the build artifact
-#      - name: Archive build artifact
-#        if: success()
-#        run: |
-#          mkdir -p artifacts
-#          cp -r build/ios/iphoneos/Runner.app artifacts/
-
-
-      # Step 7: Upload APK
-#      - name: Build APK for flavor ${{ matrix.flavor }}
-#        run: |
-#          FLAVOR="${{ matrix.flavor }}"
-#          FLAVORS_JSON=$(cat flavors.json)  # Load the flavors JSON file
-#
-#          # Extract the entrypoint for the specific flavor (without a for loop)
-#          ENTRY_POINT=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .entrypoint")
-#          VERSION=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .version")
-#          BUILD_NUMBER=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .build_number")
-#          KEYS=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"].keystore_base64")
-#          KEY_ALIAS=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"].key_alias")
-#          KEY_PASSWORD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"].key_password")
-#          STORE_PASSWORD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"].store_password")
-#
-#          # If you want to extract other data, you can do it similarly:
-#          IS_UPLOAD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .is_upload")
-#
-#          # Print the extracted data
-#          echo "Flavor: $FLAVOR"
-#          echo "Entry Point: $ENTRY_POINT"
-#          echo "Is Upload: $IS_UPLOAD"
-#          echo "Build Number: $BUILD_NUMBER"
-#          echo "Key Alias: $KEY_ALIAS"
-#          echo "Key Password: $KEY_PASSWORD"
-#          echo "Store Password: $STORE_PASSWORD"
-#
-#          # Check if is_upload is true before proceeding with the build
-#          if [[ "$IS_UPLOAD" == "true" ]]; then
-#
-#              # Decode the keystore from base64
-#              mkdir -p keystore
-#              echo "$KEYS" | base64 -d > keystore/$FLAVOR.keystore.jks
-#
-#              # Set environment variables for signing
-#              export KEYSTORE_PATH="keystore/$FLAVOR.keystore.jks"
-#              export KEY_ALIAS
-#              export KEY_PASSWORD
-#              export STORE_PASSWORD
-#
-#              if [[ "${{ matrix.platform }}" == "ios" ]]; then
-#                  echo "Running iOS build for flavor: $FLAVOR"
-#                  flutter build ios \
-#                    --flavor $FLAVOR \
-#                    --target=$ENTRY_POINT \
-#                    --release \
-#                    --build-name=$VERSION \
-#                    --build-number=$BUILD_NUMBER
-#              else
-#                echo "Skipping iOS build for flavor $FLAVOR due to condition mismatch."
-#              fi
-#              echo "Successfully built APK and AAB for $FLAVOR"
-#          else
-#            echo "Skipping build for flavor $FLAVOR because is_upload is false."
-#          fi
-
-      # Step 8: Upload APK to GitHub Actions Artifacts (Optional, if you want to store the AABs as artifacts) success() always()
-#      - name: Upload APK for flavor ${{ matrix.flavor }}
-#        if: matrix.platform == 'android' && success()
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: "${{ matrix.flavor }}-release-apk"
-#          path: "build/app/outputs/flutter-apk/app-${{ matrix.flavor }}-release.apk"
-
-
-      # Upload IPA for iOS to GitHub Actions Artifacts
-#      - name: Upload IPA for flavor ${{ matrix.flavor }}
-#        if: matrix.platform == 'ios' && success()
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: "${{ matrix.flavor }}-release-ipa"
-#          path: "build/ios/iphoneos/Runner.app"
+      # Step 6: Export IPA from the Archive
+      - name: Export IPA
+        run: |
+          xcodebuild -exportArchive -archivePath $PWD/build/sandbox.xcarchive -exportPath $PWD/build/ipa -exportOptionsPlist ExportOptions.plist
 
       # Step 7: Upload IPA as an artifact (optional)
       - name: Upload IPA as Artifact
