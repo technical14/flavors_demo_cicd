@@ -46,12 +46,11 @@ jobs:
           echo "::set-output name=flavors::$FLAVORS_ARRAY"
   build:
     needs: parse
-    runs-on: ${{ matrix.os }}
+    runs-on: macos-latest
     if: ${{ fromJson(needs.parse.outputs.flavors) != '[]' && fromJson(needs.parse.outputs.flavors) != '["null"]' }}  # Only run if flavors are not empty or ["null"]
     strategy:
       matrix:
         flavor: ${{ fromJson(needs.parse.outputs.flavors) }}
-        os: [ ubuntu-latest, macos-latest ]  # Dynamically choose Android (Ubuntu) or iOS (macOS)
         platform: [ android, ios ]  # For Android
       fail-fast: false
     steps:
