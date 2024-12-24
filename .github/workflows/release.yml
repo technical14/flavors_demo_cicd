@@ -81,105 +81,26 @@ jobs:
           java-version: '17'  # Specify Java as per your Android Studio (gradle-7.5-all version wise change)
           distribution: 'temurin'  # Use AdoptOpenJDK distribution
 
-      # Cache jq
-#      - name: Cache jq
-#        uses: actions/cache@v3
-#        with:
-#          path: /usr/bin/jq
-#          key: ${{ runner.os }}-jq-version-1.6
-#          restore-keys: |
-#            ${{ runner.os }}-jq-
-#
-#      # Step 4: Set up JSON Parsing
-#      - name: Install jq
-#        if: steps.cache.outputs.cache-hit != 'true'
-#        run: sudo apt-get install jq
-
-
-      # Set up CocoaPods caching (iOS-specific)
-#      - name: Cache CocoaPods dependencies
-#        id: cache-cocoapods
-#        uses: actions/cache@v3
-#        if: matrix.platform == 'ios'
-#        with:
-#          path: |
-#            ~/Library/Caches/CocoaPods
-#            ~/.cocoapods
-#          key: ${{ runner.os }}-cocoapods-${{ hashFiles('ios/Podfile.lock') }}
-#          restore-keys: |
-#            ${{ runner.os }}-cocoapods-
-
-      # Install Xcode Command Line Tools
-#      - name: Install Xcode Command Line Tools
+      # Step 3: Ensure Xcode Command Line Tools are installed (if necessary)
+#      - name: Ensure Xcode Command Line Tools are installed
 #        if: matrix.platform == 'ios' && runner.os == 'macOS'
 #        run: |
-#          xcode-select --install
-
-      # Step 3: Ensure Xcode Command Line Tools are installed (if necessary)
-      - name: Ensure Xcode Command Line Tools are installed
-        if: matrix.platform == 'ios' && runner.os == 'macOS'
-        run: |
-          if ! xcode-select -p &>/dev/null; then
-            echo "Xcode Command Line Tools are not installed. Installing..."
-            xcode-select --install || true  # Ignore errors if tools are already installed
-          else
-            echo "Xcode Command Line Tools are already installed."
-          fi
-          # Check and accept Xcode license (necessary on fresh machines)
-          sudo xcodebuild -license accept
-
-      # Step 4: Install CocoaPods dependencies (only if cache is not hit)
-#      - name: Install CocoaPods dependencies
-#        if: matrix.platform == 'ios'
-#        run: |
-#          # Install CocoaPods if not already installed
-#          gem install cocoapods --user-install
-#          export PATH="$HOME/.gem/ruby/3.2.0/bin:$PATH"  # Add gem path to $PATH
-#
-#          # Ensure Flutter dependencies are fetched
-#          flutter pub get  # Ensure Flutter dependencies are fetched, including the Generated.xcconfig file
-#
-#          # Update Podfile for higher platform version if necessary
-#          if ! grep -q "platform :ios, '11.0'" ios/Podfile; then
-#            sed -i '' "s/platform :ios, '10.0'/platform :ios, '11.0'/" ios/Podfile
+#          if ! xcode-select -p &>/dev/null; then
+#            echo "Xcode Command Line Tools are not installed. Installing..."
+#            xcode-select --install || true  # Ignore errors if tools are already installed
+#          else
+#            echo "Xcode Command Line Tools are already installed."
 #          fi
-#
-#          # Install iOS dependencies with pod
-#          pod install --repo-update --project-directory=ios  # Run pod install after flutter pub get
+#          # Check and accept Xcode license (necessary on fresh machines)
+#          sudo xcodebuild -license accept
 
-
-      # Step 3: Install Xcode 16.1 (manually setting the Xcode version)
-#      - name: Set up Xcode 16.1
-#        run: |
-#          sudo xcode-select -s /Applications/Xcode_16.1.app/Contents/Developer
-#          sudo xcodebuild -runFirstLaunch  # Initialize Xcode
-#          sudo xcodebuild -license accept  # Accept Xcode license agreement
-
-      # Step 4: Install CocoaPods version 1.15.2
-      - name: Install CocoaPods 1.15.2
+      # Step 4: Install CocoaPods and specify platform version in Podfile
+      - name: Install CocoaPods and configure Podfile
         run: |
-          gem install cocoapods -v 1.15.2 --user-install
-          export PATH="$HOME/.gem/ruby/3.2.0/bin:$PATH"  # Add gem path to $PATH
-
-      # Step 5: Ensure Flutter dependencies are fetched
-#      - name: Flutter pub get
-#        run: |
-#          flutter pub get  # Ensure Flutter dependencies are fetched, including the Generated.xcconfig file
-
-      # Step 5: Update Podfile for iOS platform version
-      - name: Update Podfile for iOS platform version 11.0
-        run: |
-          # Check if the Podfile contains a platform :ios line
-          if grep -q "platform :ios" ios/Podfile; then
-            # Replace the existing platform line with iOS 11.0
-            sed -i '' "s/platform :ios, '[^']*'/platform :ios, '11.0'/" ios/Podfile
-          else
-            # If not present, add platform line at the top of the Podfile
-            sed -i '' "1i\platform :ios, '11.0'" ios/Podfile
-          fi
-          
-          # Debug: Print the Podfile content after modification
-          cat ios/Podfile
+          sudo gem install cocoapods # Install CocoaPods
+          # Ensure the Podfile has a platform version
+          sed -i '' '1s/^/platform :ios, '12.0'\n/' ios/Podfile # Update Podfile to specify iOS 12.0 or change it as per your requirements
+          pod install  # Install dependencies
 
       # Step 5: flutter project clean
       - name: Clean project
