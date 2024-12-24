@@ -46,7 +46,7 @@ jobs:
           echo "::set-output name=flavors::$FLAVORS_ARRAY"
   build:
     needs: parse
-    runs-on: macos-latest
+    runs-on: macos-11
     if: ${{ fromJson(needs.parse.outputs.flavors) != '[]' && fromJson(needs.parse.outputs.flavors) != '["null"]' }}  # Only run if flavors are not empty or ["null"]
     strategy:
       matrix:
@@ -116,20 +116,23 @@ jobs:
 #          cd ios
 #          pod install
 
-      # Step 4: Install CocoaPods (ensure CocoaPods is installed)
-      - name: Install CocoaPods
+      # Step 3: Install CocoaPods (with specific version)
+      - name: Install CocoaPods (specific version)
         run: |
-          sudo gem install cocoapods  # Install CocoaPods
-          pod --version              # Check installed version
+          sudo gem install cocoapods -v 1.16.2  # Specify the version of CocoaPods
+          pod --version  # Verify CocoaPods installation
 
-      # Step 4: Install Flutter dependencies
-      - name: Install Flutter dependencies
-        run: flutter pub get  # Make sure flutter pub get is executed first
-
-      # Step 5: Install iOS dependencies using CocoaPods
+      # Step 4: Install dependencies using CocoaPods
       - name: Install Pods
         run: |
-          cd ios && pod install
+          cd ios
+          pod install  # Install dependencies
+
+      # Step 5: Set up Xcode (specific version)
+      - name: Set up Xcode 16.1
+        uses: apple-actions/setup-xcode@v3
+        with:
+          xcode-version: '16.1'
 
       # Step 5: flutter project clean
 #      - name: Clean project
