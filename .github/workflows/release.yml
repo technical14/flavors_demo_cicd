@@ -216,13 +216,6 @@ jobs:
 #          name: "${{ matrix.flavor }}-release-apk"
 #          path: "build/app/outputs/flutter-apk/app-${{ matrix.flavor }}-release.apk"
 
-      # Step 9: Upload AAB to GitHub Actions Artifacts (Optional, if you want to store the AABs as artifacts) success() always()
-#      - name: Upload AAB for flavor ${{ matrix.flavor }}
-#        if: success()
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: "${{ matrix.flavor }}-release-aab"
-#          path: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
 
       # Upload IPA for iOS to GitHub Actions Artifacts
 #      - name: Upload IPA for flavor ${{ matrix.flavor }}
@@ -238,32 +231,3 @@ jobs:
         with:
           name: flavor_cicd_demo.ipa
           path: $PWD/build/ipa/*.ipa
-
-      # Step 9: Extract service_account from flavors.json use When direct (Upload in google playstore)
-#      - name: Extracting service_account from flavors.json
-#        id: extract-application-id
-#        run: |
-#          service_account=$(jq -r '.flavors["${{ matrix.flavor }}"].service_account' flavors.json)
-#          echo "Service Account: $service_account"
-#          echo "$service_account" > service_account.json
-#          cat service_account.json
-#
-#          PACKAGE_NAME=$(jq -r --arg flavor "${{ matrix.flavor }}" '.flavors[] | select(.name == $flavor) | .application_id' flavors.json)
-#
-#          # Output the package name for debugging purposes
-#          echo "Package name for $FLAVOR flavor: $PACKAGE_NAME"
-#
-#          # Set the extracted package name as an output for use in later steps
-#          echo "::set-output name=PACKAGE_NAME::$PACKAGE_NAME"  # Correct way to set output
-
-      # Step 10: Deploy to Play Store (Upload in google playstore)
-#      - name: Deploying app to Play Store
-#        id: deploy
-#        if: ${{ steps.extract-application-id.outputs.PACKAGE_NAME != '' && steps.extract-application-id.outputs.PACKAGE_NAME != 'null' }}
-#        uses: r0adkll/upload-google-play@v1.1.3
-#        with:
-#          serviceAccountJson: service_account.json
-#          packageName: ${{ steps.extract-application-id.outputs.PACKAGE_NAME }}  # Use the extracted package name directly
-#          releaseFiles: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
-#          track: production
-#          status: 'completed'
