@@ -46,7 +46,7 @@ jobs:
           echo "::set-output name=flavors::$FLAVORS_ARRAY"
   build:
     needs: parse
-    runs-on: macos-11
+    runs-on: macos-latest
     if: ${{ fromJson(needs.parse.outputs.flavors) != '[]' && fromJson(needs.parse.outputs.flavors) != '["null"]' }}  # Only run if flavors are not empty or ["null"]
     strategy:
       matrix:
