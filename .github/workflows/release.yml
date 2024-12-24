@@ -51,10 +51,8 @@ jobs:
     strategy:
       matrix:
         flavor: ${{ fromJson(needs.parse.outputs.flavors) }}
-        platform: [ios,android]
-        os:
-          - macos-latest  # For iOS
-          - ubuntu-latest  # For Android
+        os: [ ubuntu-latest, macos-latest ]  # Dynamically choose Android (Ubuntu) or iOS (macOS)
+        platform: [ android, ios ]  # For Android
       fail-fast: false
     steps:
       # Step 1: Checkout the repository code
