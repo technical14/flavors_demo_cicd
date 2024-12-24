@@ -95,12 +95,37 @@ jobs:
 #          sudo xcodebuild -license accept
 
       # Step 4: Install CocoaPods and specify platform version in Podfile
-      - name: Install CocoaPods and configure Podfile
+#      - name: Install CocoaPods and configure Podfile
+#        run: |
+#          # If the ios directory doesn't exist, create it
+#          if [ ! -d "ios" ]; then
+#            flutter create .
+#          fi
+#
+#          # Install CocoaPods
+#          sudo gem install cocoapods
+#
+#          # Ensure the Podfile has a platform version
+#          if [ ! -f "ios/Podfile" ]; then
+#            echo "platform :ios, '12.0'" > ios/Podfile
+#          else
+#            sed -i '' '1s/^/platform :ios, '12.0'\n/' ios/Podfile
+#          fi
+#
+#          # Install dependencies using CocoaPods
+#          cd ios
+#          pod install
+
+      # Step 4: Install CocoaPods (ensure CocoaPods is installed)
+      - name: Install CocoaPods
         run: |
-          sudo gem install cocoapods # Install CocoaPods
-          # Ensure the Podfile has a platform version
-          sed -i '' '1s/^/platform :ios, '12.0'\n/' ios/Podfile # Update Podfile to specify iOS 12.0 or change it as per your requirements
-          pod install  # Install dependencies
+          sudo gem install cocoapods  # Install CocoaPods
+          pod --version              # Check installed version
+
+      # Step 5: Install iOS dependencies using CocoaPods
+      - name: Install Pods
+        run: |
+          cd ios && pod install
 
       # Step 5: flutter project clean
       - name: Clean project
