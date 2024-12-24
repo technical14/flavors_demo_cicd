@@ -122,14 +122,18 @@ jobs:
           sudo gem install cocoapods  # Install CocoaPods
           pod --version              # Check installed version
 
+      # Step 4: Install Flutter dependencies
+      - name: Install Flutter dependencies
+        run: flutter pub get  # Make sure flutter pub get is executed first
+
       # Step 5: Install iOS dependencies using CocoaPods
       - name: Install Pods
         run: |
           cd ios && pod install
 
       # Step 5: flutter project clean
-      - name: Clean project
-        run: flutter clean
+#      - name: Clean project
+#        run: flutter clean
 
       # Caching Flutter dependencies (caching Flutter dependencies, if needed)
       - name: Cache Flutter Dependencies
