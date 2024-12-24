@@ -51,7 +51,7 @@ jobs:
     strategy:
       matrix:
         flavor: ${{ fromJson(needs.parse.outputs.flavors) }}
-        platform: [ android, ios ]  # For Android
+        platform: [android, ios]  # For Android
       fail-fast: false
     steps:
       # Step 1: Checkout the repository code
@@ -76,6 +76,7 @@ jobs:
 
       # Step 3: Set up Java 17
       - name: Set up Java 17
+        if: matrix.platform == 'android'
         uses: actions/setup-java@v2
         with:
           java-version: '17'  # Specify Java as per your Android Studio (gradle-7.5-all version wise change)
@@ -143,6 +144,7 @@ jobs:
 
           # If you want to extract other data, you can do it similarly:
           IS_UPLOAD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .is_upload")
+          IS_IOS_UPLOAD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .is_ios_upload")
 
           # Print the extracted data
           echo "Flavor: $FLAVOR"
@@ -166,7 +168,7 @@ jobs:
               export KEY_PASSWORD
               export STORE_PASSWORD
 
-              if [[ "${{ matrix.platform }}" == "ios" ]]; then
+              if [[ "${{ matrix.platform }}" == "ios" || "$IS_IOS_UPLOAD" == "true" ]]; then
                   echo "Running iOS build for flavor: $FLAVOR"
                   flutter build ios \
                     --flavor $FLAVOR \

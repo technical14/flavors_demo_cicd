@@ -12,7 +12,8 @@
       "application_id": "com.sandbox",
       "app_name": "Sandbox",
       "keystore_path": "keystore/sandbox.jks",
-      "is_upload": true
+      "is_upload": true,
+      "is_ios_upload": true
     },
     "production":{
       "name": "production",
@@ -26,7 +27,8 @@
       "application_id": "production.app.com",
       "app_name": "Production",
       "keystore_path": "keystore/production.jks",
-      "is_upload": false
+      "is_upload": true,
+      "is_ios_upload": false
     },
     "development":{
       "name": "development",
@@ -40,7 +42,8 @@
       "application_id": "development.com",
       "app_name": "Development",
       "keystore_path": "keystore/development.jks",
-      "is_upload": false
+      "is_upload": false,
+      "is_ios_upload": false
     },
     "staging":{
       "name": "staging",
@@ -54,7 +57,8 @@
       "application_id": "com.app.staging",
       "app_name": "Staging",
       "keystore_path": "keystore/staging.jks",
-      "is_upload": false
+      "is_upload": false,
+      "is_ios_upload": false
     },
     "environment":{
       "name": "environment",
@@ -68,7 +72,8 @@
       "application_id": "development.com",
       "app_name": "Environment",
       "keystore_path": "keystore/environment.jks",
-      "is_upload": false
+      "is_upload": false,
+      "is_ios_upload": false
     }
   }
 }
