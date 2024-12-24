@@ -1,0 +1,23 @@
+cat <<EOL > Runner.xcodeproj/xcshareddata/xcschemes/sandbox.xcscheme
+<?xml version="1.0" encoding="UTF-8"?>
+<Scheme version="1.3">
+    <BuildAction parallelizeBuildables="YES" buildImplicitDependencies="YES">
+        <BuildActionEntries>
+            <BuildActionEntry location="container:Runner.xcworkspace">
+                <BuildableReference blueprintIdentifier="com.apple.product-type.application" blueprintName="Runner" buildableName="Runner.app" >
+                    <BuildSettings>
+                        <BuildSetting key="FLAVOR" value="sandbox"/>
+                    </BuildSettings>
+                </BuildableReference>
+            </BuildActionEntry>
+        </BuildActionEntries>
+    </BuildAction>
+    <RunAction>
+        <BuildConfiguration>Release</BuildConfiguration>
+        <BuildableReference blueprintIdentifier="com.apple.product-type.application" blueprintName="Runner" buildableName="Runner.app"/>
+    </RunAction>
+    <TestAction>
+        <BuildableReference blueprintIdentifier="com.apple.product-type.application" blueprintName="Runner" buildableName="Runner.app"/>
+    </TestAction>
+</Scheme>
+EOL
