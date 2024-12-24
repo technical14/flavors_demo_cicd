@@ -3,7 +3,7 @@ name: Build Flutter APK
 on:
   push:
     branches:
-      - main   # Trigger action on push to the 'main' branch
+      - main
 
 jobs:
   parse:
@@ -46,12 +46,15 @@ jobs:
           echo "::set-output name=flavors::$FLAVORS_ARRAY"
   build:
     needs: parse
-    runs-on: macos-latest
+    runs-on: ${{ matrix.os }}
     if: ${{ fromJson(needs.parse.outputs.flavors) != '[]' && fromJson(needs.parse.outputs.flavors) != '["null"]' }}  # Only run if flavors are not empty or ["null"]
     strategy:
       matrix:
         flavor: ${{ fromJson(needs.parse.outputs.flavors) }}
-        platform: [ios]
+        platform: [ios,android]
+        os:
+          - macos-latest  # For iOS
+          - ubuntu-latest  # For Android
       fail-fast: false
     steps:
       # Step 1: Checkout the repository code
@@ -81,35 +84,27 @@ jobs:
           java-version: '17'  # Specify Java as per your Android Studio (gradle-7.5-all version wise change)
           distribution: 'temurin'  # Use AdoptOpenJDK distribution
 
-      # Step 3: Clean Flutter project (optional, if you want a fresh build)
+      # Step 4: Clean Flutter project (optional, if you want a fresh build)
       - name: Clean Flutter project
         run: flutter clean
 
-      # Step 4: Get Flutter dependencies
+      # Step 5: Get Flutter dependencies
       - name: Get Flutter dependencies
         run: flutter pub get
 
-      # Step 3: Install CocoaPods (with specific version)
-#      - name: Install CocoaPods (specific version)
-#        run: |
-#          sudo gem install cocoapods -v 1.16.2  # Specify the version of CocoaPods
-#          pod --version  # Verify CocoaPods installation
-
-      # Step 4: Install dependencies using CocoaPods
+      # Step 6: Install dependencies using CocoaPods
       - name: Install Pods
+        if: matrix.platform == 'ios'
         run: |
           cd ios
           pod install  # Install dependencies
 
-      # Step 5: Set up Xcode (specific version)
+      # Step 7: Set up Xcode (specific version)
       - name: Install Xcode 16.1 (Manual Setup)
+        if: matrix.platform == 'ios'
         run: |
           sudo xcode-select --switch /Applications/Xcode_16.1.app/Contents/Developer
           sudo xcodebuild -version  # Verify installed version of Xcode
-
-      # Step 5: flutter project clean
-      - name: Clean project
-        run: flutter clean
 
       # Caching Flutter dependencies (caching Flutter dependencies, if needed)
       - name: Cache Flutter Dependencies
@@ -122,102 +117,112 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-flutter-deps-
 
-      # Step 6: Install dependencies
+      # Step 8: Install Flutter dependencies
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           flutter pub get  # Get Flutter project dependencies
 
-      # Step 6: Install CocoaPods dependencies
-      - name: Install CocoaPods dependencies
-        run: |
-          cd ios
-          pod install --repo-update
+      # Step 9: Install CocoaPods dependencies
+#      - name: Install CocoaPods dependencies
+#        run: |
+#          cd ios
+#          pod install --repo-update
 
-      # Step 4: Build the app with flavor 'sandbox'
-      - name: Build iOS with flavor 'sandbox'
+      #Step 8: Upload APK Android and Ios
+      - name: Build APK for flavor ${{ matrix.flavor }}
         run: |
-          flutter build ios --release --no-codesign --flavor sandbox --target lib/EntryPoint/main_sandbox.dart --build-name=1.0.0 --build-number=2
+          FLAVOR="${{ matrix.flavor }}"
+          FLAVORS_JSON=$(cat flavors.json)  # Load the flavors JSON file
 
-      # Step 5: Archive the iOS app using the sandbox scheme
+          # Extract the entrypoint for the specific flavor (without a for loop)
+          ENTRY_POINT=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .entrypoint")
+          VERSION=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .version")
+          BUILD_NUMBER=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .build_number")
+          KEYS=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"].keystore_base64")
+          KEY_ALIAS=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"].key_alias")
+          KEY_PASSWORD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"].key_password")
+          STORE_PASSWORD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"].store_password")
+
+          # If you want to extract other data, you can do it similarly:
+          IS_UPLOAD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .is_upload")
+
+          # Print the extracted data
+          echo "Flavor: $FLAVOR"
+          echo "Entry Point: $ENTRY_POINT"
+          echo "Is Upload: $IS_UPLOAD"
+          echo "Build Number: $BUILD_NUMBER"
+          echo "Key Alias: $KEY_ALIAS"
+          echo "Key Password: $KEY_PASSWORD"
+          echo "Store Password: $STORE_PASSWORD"
+
+          # Check if is_upload is true before proceeding with the build
+          if [[ "$IS_UPLOAD" == "true" ]]; then
+
+              # Decode the keystore from base64
+              mkdir -p keystore
+              echo "$KEYS" | base64 -d > keystore/$FLAVOR.keystore.jks
+
+              # Set environment variables for signing
+              export KEYSTORE_PATH="keystore/$FLAVOR.keystore.jks"
+              export KEY_ALIAS
+              export KEY_PASSWORD
+              export STORE_PASSWORD
+
+              if [[ "${{ matrix.platform }}" == "ios" ]]; then
+                  echo "Running iOS build for flavor: $FLAVOR"
+                  flutter build ios \
+                    --flavor $FLAVOR \
+                    --target=$ENTRY_POINT \
+                    --release \
+                    --build-name=$VERSION \
+                    --build-number=$BUILD_NUMBER
+              else
+                echo "Skipping iOS build for flavor $FLAVOR due to condition mismatch."
+              fi
+              
+              if [[ "${{ matrix.platform }}" == "android" ]]; then
+                  echo "Running Android build for flavor: $FLAVOR"
+                  flutter build appbundle \
+                    --flavor $FLAVOR \
+                    --target=$ENTRY_POINT \
+                    --release \
+                    --build-name=$VERSION \
+                    --build-number=$BUILD_NUMBER
+              else
+                echo "Skipping iOS build for flavor $FLAVOR due to condition mismatch."
+              fi
+              echo "Successfully built APK and AAB for $FLAVOR"
+          else
+            echo "Skipping build for flavor $FLAVOR because is_upload is false."
+          fi
+
+      # Step 9: Upload IPA for iOS to GitHub Actions Artifacts
+      - name: Upload IPA for flavor ${{ matrix.flavor }}
+        if: matrix.platform == 'ios' && success()
+        uses: actions/upload-artifact@v3
+        with:
+          name: "${{ matrix.flavor }}-release-ipa"
+          path: "build/ios/iphoneos/Runner.app"
+
+      # Step 10: Archive the iOS app using the sandbox scheme
       - name: Archive iOS app
+        if: matrix.platform == 'ios'
         run: |
           xcodebuild clean -workspace ios/Runner.xcworkspace -scheme sandbox -configuration Release
           xcodebuild archive -workspace ios/Runner.xcworkspace -scheme sandbox -configuration Release -archivePath $PWD/build/sandbox.xcarchive
 
-      # Step 6: Export IPA
+      # Step 11: Export IPA
       - name: Export IPA
+        if: matrix.platform == 'ios'
         run: |
           xcodebuild -exportArchive -archivePath $PWD/build/sandbox.xcarchive -exportPath $PWD/build/ipa -exportOptionsPlist ios/ExportOptions.plist
 
-      # Step 7: Upload IPA as an artifact
+      # Step 12: Upload IPA as an artifact
       - name: Upload IPA
+        if: matrix.platform == 'ios'
         uses: actions/upload-artifact@v3
         with:
           name: iOS-App-IPA
           path: $PWD/build/ipa/*.ipa
-
-      # Step 7: Upload APK
-#      - name: Build APK for flavor ${{ matrix.flavor }}
-#        run: |
-#          FLAVOR="${{ matrix.flavor }}"
-#          FLAVORS_JSON=$(cat flavors.json)  # Load the flavors JSON file
-#
-#          # Extract the entrypoint for the specific flavor (without a for loop)
-#          ENTRY_POINT=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .entrypoint")
-#          VERSION=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .version")
-#          BUILD_NUMBER=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .build_number")
-#          KEYS=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"].keystore_base64")
-#          KEY_ALIAS=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"].key_alias")
-#          KEY_PASSWORD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"].key_password")
-#          STORE_PASSWORD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"].store_password")
-#
-#          # If you want to extract other data, you can do it similarly:
-#          IS_UPLOAD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .is_upload")
-#
-#          # Print the extracted data
-#          echo "Flavor: $FLAVOR"
-#          echo "Entry Point: $ENTRY_POINT"
-#          echo "Is Upload: $IS_UPLOAD"
-#          echo "Build Number: $BUILD_NUMBER"
-#          echo "Key Alias: $KEY_ALIAS"
-#          echo "Key Password: $KEY_PASSWORD"
-#          echo "Store Password: $STORE_PASSWORD"
-#
-#          # Check if is_upload is true before proceeding with the build
-#          if [[ "$IS_UPLOAD" == "true" ]]; then
-#
-#              # Decode the keystore from base64
-#              mkdir -p keystore
-#              echo "$KEYS" | base64 -d > keystore/$FLAVOR.keystore.jks
-#
-#              # Set environment variables for signing
-#              export KEYSTORE_PATH="keystore/$FLAVOR.keystore.jks"
-#              export KEY_ALIAS
-#              export KEY_PASSWORD
-#              export STORE_PASSWORD
-#
-#              if [[ "${{ matrix.platform }}" == "ios" ]]; then
-#                  echo "Running iOS build for flavor: $FLAVOR"
-#                  flutter build ios \
-#                    --flavor $FLAVOR \
-#                    --target=$ENTRY_POINT \
-#                    --release \
-#                    --build-name=$VERSION \
-#                    --build-number=$BUILD_NUMBER
-#              else
-#                echo "Skipping iOS build for flavor $FLAVOR due to condition mismatch."
-#              fi
-#              echo "Successfully built APK and AAB for $FLAVOR"
-#          else
-#            echo "Skipping build for flavor $FLAVOR because is_upload is false."
-#          fi
-
-      # Upload IPA for iOS to GitHub Actions Artifacts
-#      - name: Upload IPA for flavor ${{ matrix.flavor }}
-#        if: matrix.platform == 'ios' && success()
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: "${{ matrix.flavor }}-release-ipa"
-#          path: "build/ios/iphoneos/Runner.app"
 
