@@ -129,10 +129,10 @@ jobs:
           pod install  # Install dependencies
 
       # Step 5: Set up Xcode (specific version)
-      - name: Set up Xcode 16.1
-        uses: technical14/flavors_demo_cicd@v3
-        with:
-          xcode-version: '16.1'
+      - name: Install Xcode 16.1 (Manual Setup)
+        run: |
+          sudo xcode-select --switch /Applications/Xcode_16.1.app/Contents/Developer
+          sudo xcodebuild -version  # Verify installed version of Xcode
 
       # Step 5: flutter project clean
 #      - name: Clean project
