@@ -81,40 +81,15 @@ jobs:
           java-version: '17'  # Specify Java as per your Android Studio (gradle-7.5-all version wise change)
           distribution: 'temurin'  # Use AdoptOpenJDK distribution
 
-      # Step 3: Ensure Xcode Command Line Tools are installed (if necessary)
-#      - name: Ensure Xcode Command Line Tools are installed
-#        if: matrix.platform == 'ios' && runner.os == 'macOS'
-#        run: |
-#          if ! xcode-select -p &>/dev/null; then
-#            echo "Xcode Command Line Tools are not installed. Installing..."
-#            xcode-select --install || true  # Ignore errors if tools are already installed
-#          else
-#            echo "Xcode Command Line Tools are already installed."
-#          fi
-#          # Check and accept Xcode license (necessary on fresh machines)
-#          sudo xcodebuild -license accept
+      # Step 5: flutter project clean
+      - name: Clean project
+        run: flutter clean
 
-      # Step 4: Install CocoaPods and specify platform version in Podfile
-#      - name: Install CocoaPods and configure Podfile
-#        run: |
-#          # If the ios directory doesn't exist, create it
-#          if [ ! -d "ios" ]; then
-#            flutter create .
-#          fi
-#
-#          # Install CocoaPods
-#          sudo gem install cocoapods
-#
-#          # Ensure the Podfile has a platform version
-#          if [ ! -f "ios/Podfile" ]; then
-#            echo "platform :ios, '12.0'" > ios/Podfile
-#          else
-#            sed -i '' '1s/^/platform :ios, '12.0'\n/' ios/Podfile
-#          fi
-#
-#          # Install dependencies using CocoaPods
-#          cd ios
-#          pod install
+      # Step 6: Install dependencies
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          flutter pub get  # Get Flutter project dependencies
 
       # Step 3: Install CocoaPods (with specific version)
       - name: Install CocoaPods (specific version)
@@ -133,33 +108,6 @@ jobs:
         run: |
           sudo xcode-select --switch /Applications/Xcode_16.1.app/Contents/Developer
           sudo xcodebuild -version  # Verify installed version of Xcode
-
-      # Step 5: flutter project clean
-#      - name: Clean project
-#        run: flutter clean
-
-      # Caching Flutter dependencies (caching Flutter dependencies, if needed)
-      - name: Cache Flutter Dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.pub-cache
-            build/
-          key: ${{ runner.os }}-flutter-deps-${{ hashFiles('pubspec.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-flutter-deps-
-
-      # Step 6: Install dependencies
-      - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: |
-          flutter pub get  # Get Flutter project dependencies
-
-      # Step 6: Install CocoaPods dependencies
-      - name: Install CocoaPods dependencies
-        run: |
-          cd ios
-          pod install --repo-update
 
       # Build iOS app with flavor
       - name: Build iOS app with flavor sandbox
