@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       platforms: ${{ steps.set-flavors.outputs.platforms }}
+      flavors: ${{ steps.set-flavors.outputs.flavors }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -21,6 +22,13 @@ jobs:
         id: set-flavors
         run: |
           FLAVORS_JSON=$(cat flavors.json)
+          FLAVORS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_upload == true) | .value.name')
+          FLAVORS_ARRAY=$(echo "$FLAVORS_LIST" | sed 's/^/"/;s/$/"/' | paste -sd "," -)
+          FLAVORS_ARRAY="[$FLAVORS_ARRAY]"
+          echo "Flavors to build: $FLAVORS_ARRAY"
+          echo "::set-output name=flavors::$FLAVORS_ARRAY"
+          
+          
           ANDROID_PLATFORMS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_upload == true) | .value.platforms | .[]')
 
           # Extract platforms for iOS (where is_ios_upload is true and is_upload is true)
@@ -49,4 +57,5 @@ jobs:
         run: |
           # Access the environment variable and print it
           echo "PLATFORMS: ${{ needs.parse.outputs.platforms }}"
+          echo "FLAVORS: ${{ needs.parse.outputs.flavors }}"
 
