@@ -8,6 +8,8 @@ on:
 jobs:
   parse:
     runs-on: ubuntu-latest
+    outputs:
+      platforms: ${{ steps.set-platforms.outputs.platforms }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -17,17 +19,21 @@ jobs:
         run: |
           FLAVORS_JSON=$(cat flavors.json)
           # Extract dynamic platforms based on the presence of `platforms` in each flavor
-          PLATFORMS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_upload == true) | .value.platforms | .[]')
-          
-          # Create array of platforms (unique and in proper format)
-          PLATFORMS_ARRAY=$(echo "$PLATFORMS_LIST" | sed 's/^/"/;s/$/"/' | paste -sd "," -)
+          ANDROID_PLATFORMS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_ios_upload == false and .value.is_upload == true) | .value.platforms | .[]')
+          IOS_PLATFORMS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_ios_upload == true and .value.is_upload == true) | .value.platforms | .[]')
+
+          # Combine both lists (Android and iOS platforms) without duplicates
+          COMBINED_PLATFORMS=$(echo -e "$ANDROID_PLATFORMS_LIST\n$IOS_PLATFORMS_LIST" | sort -u)
+
+          # Format the platforms into a JSON array for use in the matrix strategy
+          PLATFORMS_ARRAY=$(echo "$COMBINED_PLATFORMS" | sed 's/^/"/;s/$/"/' | paste -sd "," -)
           PLATFORMS_ARRAY="[$PLATFORMS_ARRAY]"
+          
+          # Debug output
+          echo "Flavors to build for platforms: $PLATFORMS_ARRAY"
 
-          # Debug print
-          echo "Flavors to build platform: $PLATFORMS_ARRAY"
-
-          # Set the platforms variable using environment file (NEW METHOD)
-          echo "PLATFORMS=$PLATFORMS_ARRAY" >> $GITHUB_ENV
+          # Set the platforms in the environment variable for the matrix to use
+          echo "::set-output name=platforms::$PLATFORMS_ARRAY"
 
   build:
     needs: parse
@@ -36,12 +42,5 @@ jobs:
       - name: Debug Print Platforms
         run: |
           # Ensure the PLATFORMS environment variable is set and echo it
-          echo "PLATFORMS_LIST: ${{ env.PLATFORMS }}"
-
-          # Now parse it from JSON format using 'fromJson' to convert it into a list
-          if [ -n "${{ env.PLATFORMS }}" ]; then
-            echo "Parsed PLATFORMS_LIST: ${{ fromJson(env.PLATFORMS) }}"
-          else
-            echo "PLATFORMS is not set correctly!"
-          fi
+          echo "PLATFORMS_LIST: ${{ fromJson(needs.parse.outputs.platforms) }}"
 
