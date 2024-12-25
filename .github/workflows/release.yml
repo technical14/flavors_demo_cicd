@@ -14,6 +14,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Install jq
+        run: sudo apt-get install jq
+
       - name: Parse flavors from JSON
         id: set-flavors
         run: |
@@ -37,13 +40,10 @@ jobs:
           echo "PLATFORMS=$PLATFORMS_ARRAY" >> $GITHUB_ENV
   build:
     needs: parse
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
-      - name: Install jq
-        run: sudo apt-get install jq
 
       - name: Debug Print Platforms (After Setting GITHUB_ENV)
         run: |
