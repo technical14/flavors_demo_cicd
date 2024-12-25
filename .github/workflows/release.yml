@@ -20,7 +20,7 @@ jobs:
           PLATFORMS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_upload == true) | .value.platforms | .[]')
           
           # Create array of platforms (unique and in proper format)
-          PLATFORMS_ARRAY=$(echo "$PLATFORMS_LIST" | sed 's/^/"/;s/$/"/' | paste -sd "," -)
+          PLATFORMS_ARRAY=$(echo "$PLATFORMS_LIST" | sort -u | sed 's/^/"/;s/$/"/' | paste -sd "," -)
           PLATFORMS_ARRAY="[$PLATFORMS_ARRAY]"
 
           # Debug print
