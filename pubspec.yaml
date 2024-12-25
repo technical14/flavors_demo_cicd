@@ -106,9 +106,6 @@ flutter_flavor:
       android:
         name: "Production"
         applicationId: "production.app.com"
-      ios:
-        name: "Production"
-        bundleId: "production.app.com"
     development:
       android:
         name: "Development"
