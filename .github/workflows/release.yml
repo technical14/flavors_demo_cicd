@@ -51,4 +51,4 @@ jobs:
     steps:
     - name: Debug Print Platforms
       run: |
-          echo "PLATFORMS_LIST: ${{ needs.parse.outputs.platforms }} Patform: ${{ fromJson(needs.parse.outputs.platforms) }}"
+          echo "PLATFORMS_LIST: ${{ needs.parse.outputs.platforms }}"
