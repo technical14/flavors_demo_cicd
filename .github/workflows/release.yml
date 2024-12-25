@@ -19,8 +19,8 @@ jobs:
         run: |
           FLAVORS_JSON=$(cat flavors.json)
           # Extract dynamic platforms based on the presence of `platforms` in each flavor
-          ANDROID_PLATFORMS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_ios_upload == false and .value.is_upload == true) | .value.platforms | .[]')
-          IOS_PLATFORMS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_ios_upload == true and .value.is_upload == true) | .value.platforms | .[]')
+          ANDROID_PLATFORMS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_ios_upload == false and .value.is_upload == true)')
+          IOS_PLATFORMS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_ios_upload == true and .value.is_upload == true)')
 
           # Combine both lists (Android and iOS platforms) without duplicates
           COMBINED_PLATFORMS=$(echo -e "$ANDROID_PLATFORMS_LIST\n$IOS_PLATFORMS_LIST" | sort -u)
