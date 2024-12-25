@@ -29,7 +29,7 @@ jobs:
             # Add platform based on `is_ios_upload`
             if [ "$IS_IOS_UPLOAD" == "true" ] && [ "$IS_UPLOAD" == "true" ]; then
               PLATFORMS_LIST+=("ios")
-            elif 
+            else 
               PLATFORMS_LIST+=("android")
             fi
           done
