@@ -10,7 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       platforms: ${{ steps.set-platforms.outputs.platforms }}
-      flavors: ${{ steps.set-flavors.outputs.flavors }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -31,13 +30,6 @@ jobs:
       - name: Parse flavors from JSON
         id: set-flavors
         run: |
-          FLAVORS_JSON=$(cat flavors.json)
-          FLAVORS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_upload == true) | .value.name')
-          FLAVORS_ARRAY=$(echo "$FLAVORS_LIST" | sed 's/^/"/;s/$/"/' | paste -sd "," -)
-          FLAVORS_ARRAY="[$FLAVORS_ARRAY]"
-          echo "Flavors to build: $FLAVORS_ARRAY"
-          echo "::set-output name=flavors::$FLAVORS_ARRAY"
-          
           # Extract dynamic platforms based on the presence of `platforms` in each flavor
           PLATFORMS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_upload == true) | .value.platforms | .[]' | sort -u)
           
@@ -51,4 +43,4 @@ jobs:
     steps:
     - name: Debug Print Platforms
       run: |
-          echo "PLATFORMS_LIST: ${{ needs.parse.outputs.flavors }}"
+          echo "PLATFORMS_LIST: ${{ needs.parse.outputs.platforms }}"
