@@ -42,7 +42,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Print the Platforms
+      - name: Install jq
+        run: sudo apt-get install jq
+
+      - name: Debug Print Platforms (After Setting GITHUB_ENV)
         run: |
+          # Access the environment variable and print it
           echo "PLATFORMS: $PLATFORMS"
 
