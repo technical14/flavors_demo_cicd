@@ -43,6 +43,7 @@ jobs:
           
           PLATFORMS_ARRAY=$(echo "$PLATFORMS_LIST" | sed 's/^/"/;s/$/"/' | paste -sd "," -)
           PLATFORMS_ARRAY="[$PLATFORMS_ARRAY]"
+          echo "Flavors to build platform: $PLATFORMS_ARRAY"
           echo "::set-output name=platforms::$PLATFORMS_ARRAY"
   build:
     needs: parse
