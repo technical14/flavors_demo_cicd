@@ -18,10 +18,10 @@ jobs:
         id: set-flavors
         run: |
           FLAVORS_JSON=$(cat flavors.json)
-          ANDROID_PLATFORMS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_upload == true and .value.is_ios_upload == false) | .value.platforms | .[]')
+          ANDROID_PLATFORMS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_upload == true) | .value.platforms | .[]')
 
           # Extract platforms for iOS (where is_ios_upload is true and is_upload is true)
-          IOS_PLATFORMS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_upload == true and .value.is_ios_upload == true) | .value.platforms | .[]')
+          IOS_PLATFORMS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_upload == true) | .value.platforms | .[]')
 
           # Combine both lists (Android and iOS platforms) without duplicates
           COMBINED_PLATFORMS=$(echo -e "$ANDROID_PLATFORMS_LIST\n$IOS_PLATFORMS_LIST" | sort -u)
@@ -35,4 +35,14 @@ jobs:
 
           # Set the platforms as an environment variable for the next step
           echo "PLATFORMS=$PLATFORMS_ARRAY" >> $GITHUB_ENV
+  build:
+    needs: parse
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Print the Platforms
+        run: |
+          echo "PLATFORMS: ${{ env.PLATFORMS }}"
 
