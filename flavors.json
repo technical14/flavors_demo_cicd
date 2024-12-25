@@ -59,7 +59,8 @@
       "app_name": "Staging",
       "keystore_path": "keystore/staging.jks",
       "is_upload": false,
-      "is_ios_upload": false
+      "is_ios_upload": false,
+      "platforms": []
     },
     "environment":{
       "name": "environment",
@@ -74,7 +75,8 @@
       "app_name": "Environment",
       "keystore_path": "keystore/environment.jks",
       "is_upload": false,
-      "is_ios_upload": false
+      "is_ios_upload": false,
+      "platforms": []
     }
   }
 }
