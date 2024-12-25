@@ -24,9 +24,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-jq-
 
-      - name: Install jq
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: sudo apt-get install jq
+      - name: Install jq with Homebrew
+        run: |
+          # Install jq using Homebrew (macOS package manager)
+          brew install jq
 
       - name: Parse flavors from JSON
         id: set-flavors
