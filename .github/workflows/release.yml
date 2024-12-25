@@ -8,8 +8,6 @@ on:
 jobs:
   parse:
     runs-on: ubuntu-latest
-    outputs:
-      platforms: ${{ steps.set-platforms.outputs.platforms }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -37,11 +35,11 @@ jobs:
           PLATFORMS_ARRAY=$(echo "$PLATFORMS_LIST" | sed 's/^/"/;s/$/"/' | paste -sd "," -)
           PLATFORMS_ARRAY="[$PLATFORMS_ARRAY]"
           echo "Flavors to build platform: $PLATFORMS_ARRAY"
-          echo "::set-output name=platforms::$PLATFORMS_ARRAY"
+          echo "platforms=$PLATFORMS_ARRAY" >> $GITHUB_ENV
   build:
     needs: parse
     runs-on: macos-latest
     steps:
     - name: Debug Print Platforms
       run: |
-          echo "PLATFORMS_LIST: ${{ needs.parse.outputs.platforms }}"
+          echo "PLATFORMS_LIST: ${{ fromJson(env.platforms) }"
