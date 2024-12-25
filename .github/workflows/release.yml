@@ -8,24 +8,9 @@ on:
 jobs:
   parse:
     runs-on: ubuntu-latest
-    outputs:
-      platforms: ${{ steps.set-platforms.outputs.platforms }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
-      # Step 1: Set up JSON Parsing
-      - name: Cache jq
-        uses: actions/cache@v3
-        with:
-          path: /usr/bin/jq
-          key: ${{ runner.os }}-jq-version-1.6
-          restore-keys: |
-            ${{ runner.os }}-jq-
-
-      - name: Install jq
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: sudo apt-get install jq
 
       - name: Parse flavors from JSON
         id: set-flavors
@@ -34,14 +19,25 @@ jobs:
           # Extract dynamic platforms based on the presence of `platforms` in each flavor
           PLATFORMS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_upload == true) | .value.platforms | .[]')
           
+          # Create array of platforms (unique and in proper format)
           PLATFORMS_ARRAY=$(echo "$PLATFORMS_LIST" | sed 's/^/"/;s/$/"/' | paste -sd "," -)
           PLATFORMS_ARRAY="[$PLATFORMS_ARRAY]"
+
+          # Debug print
           echo "Flavors to build platform: $PLATFORMS_ARRAY"
-          echo "::set-output name=platforms::$PLATFORMS_ARRAY"
+
+          # Set the platforms variable using environment file (NEW METHOD)
+          echo "PLATFORMS=$PLATFORMS_ARRAY" >> $GITHUB_ENV
+
   build:
     needs: parse
     runs-on: macos-latest
     steps:
-    - name: Debug Print Platforms
-      run: |
-          echo "PLATFORMS_LIST: ${{ needs.parse.outputs.platforms }}"
+      - name: Debug Print Platforms
+        run: |
+          # Print the platform value set in the environment file from previous job
+          echo "PLATFORMS_LIST: ${{ env.PLATFORMS }}"
+
+          # Parse JSON (ensure it’s correctly formatted and debug print)
+          echo "PLATFORMS_LIST parsed: ${{ fromJson(env.PLATFORMS) }}"
+
