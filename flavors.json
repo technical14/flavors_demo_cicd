@@ -13,8 +13,7 @@
       "app_name": "Sandbox",
       "keystore_path": "keystore/sandbox.jks",
       "is_upload": true,
-      "is_ios_upload": true,
-      "platforms": "android"
+      "is_ios_upload": true
     },
     "production":{
       "name": "production",
@@ -29,7 +28,7 @@
       "app_name": "Production",
       "keystore_path": "keystore/production.jks",
       "is_upload": true,
-      "is_ios_upload": true
+      "is_ios_upload": false
     },
     "development":{
       "name": "development",
