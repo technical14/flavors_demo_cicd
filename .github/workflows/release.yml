@@ -44,5 +44,5 @@ jobs:
 
       - name: Print the Platforms
         run: |
-          echo "PLATFORMS: ${{ env.PLATFORMS }}"
+          echo "PLATFORMS: $PLATFORMS"
 
