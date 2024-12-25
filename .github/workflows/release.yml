@@ -18,41 +18,21 @@ jobs:
         id: set-flavors
         run: |
           FLAVORS_JSON=$(cat flavors.json)
-          # Initialize an empty list for platforms
-          PLATFORMS_LIST=()
+          ANDROID_PLATFORMS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_upload == true and .value.is_ios_upload == false) | .value.platforms | .[]')
 
-          # Loop through each flavor and check conditions
-          for flavor in $(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_upload == true) | .key'); do
-            IS_IOS_UPLOAD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$flavor\"].is_ios_upload")
-            IS_UPLOAD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$flavor\"].is_upload")
+          # Extract platforms for iOS (where is_ios_upload is true and is_upload is true)
+          IOS_PLATFORMS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_upload == true and .value.is_ios_upload == true) | .value.platforms | .[]')
 
-            # Add platform based on `is_ios_upload`
-            if [ "$IS_IOS_UPLOAD" == "true" ] && [ "$IS_UPLOAD" == "true" ]; then
-              PLATFORMS_LIST+=("ios")
-            else 
-              PLATFORMS_LIST+=("android")
-            fi
-          done
-
-          # Remove duplicates and sort the platforms list
-          UNIQUE_PLATFORMS=$(echo "${PLATFORMS_LIST[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+          # Combine both lists (Android and iOS platforms) without duplicates
+          COMBINED_PLATFORMS=$(echo -e "$ANDROID_PLATFORMS_LIST\n$IOS_PLATFORMS_LIST" | sort -u)
 
           # Format the platforms into a JSON array
-          PLATFORMS_ARRAY=$(echo "$UNIQUE_PLATFORMS" | sed 's/^/"/;s/$/"/' | paste -sd "," -)
+          PLATFORMS_ARRAY=$(echo "$COMBINED_PLATFORMS" | sed 's/^/"/;s/$/"/' | paste -sd "," -)
           PLATFORMS_ARRAY="[$PLATFORMS_ARRAY]"
 
           # Debug output
           echo "Flavors to build for platforms: $PLATFORMS_ARRAY"
 
-          # Set the platforms in the environment variable for the matrix to use
-          echo "::set-output name=platforms::$PLATFORMS_ARRAY"
-
-  build:
-    needs: parse
-    runs-on: macos-latest
-    steps:
-      - name: Debug Print Platforms
-        run: |
-          # Ensure the PLATFORMS environment variable is set and echo it
-          echo "PLATFORMS_LIST: ${{ needs.parse.outputs.platforms }}"
+          # Set the platforms as an environment variable for the next step
+          echo "PLATFORMS=$PLATFORMS_ARRAY" >> $GITHUB_ENV
 
