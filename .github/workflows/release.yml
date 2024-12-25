@@ -9,6 +9,7 @@ jobs:
   parse:
     runs-on: ubuntu-latest
     outputs:
+      platforms: ${{ steps.set-platforms.outputs.platforms }}
       flavors: ${{ steps.set-flavors.outputs.flavors }}
     steps:
       - name: Checkout code
@@ -36,6 +37,13 @@ jobs:
           FLAVORS_ARRAY="[$FLAVORS_ARRAY]"
           echo "Flavors to build: $FLAVORS_ARRAY"
           echo "::set-output name=flavors::$FLAVORS_ARRAY"
+          
+          # Extract dynamic platforms based on the presence of `platforms` in each flavor
+          PLATFORMS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_upload == true) | .value.platforms | .[]' | sort -u)
+          
+          PLATFORMS_ARRAY=$(echo "$PLATFORMS_LIST" | sed 's/^/"/;s/$/"/' | paste -sd "," -)
+          PLATFORMS_ARRAY="[$PLATFORMS_ARRAY]"
+          echo "::set-output name=platforms::$PLATFORMS_ARRAY"
   build:
     needs: parse
     runs-on: macos-latest
@@ -43,7 +51,7 @@ jobs:
     strategy:
       matrix:
         flavor: ${{ fromJson(needs.parse.outputs.flavors) }}
-        platform: [android, ios]
+        platform: ${{ fromJson(needs.parse.outputs.platforms) }}
       fail-fast: false
     steps:
       - name: Checkout code
