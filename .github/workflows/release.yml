@@ -7,46 +7,158 @@ on:
 
 jobs:
   parse:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     outputs:
-      platforms: ${{ steps.set-flavors.outputs.platforms }}
+      platforms: ${{ steps.set-platforms.outputs.platforms }}
+      flavors: ${{ steps.set-flavors.outputs.flavors }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Install jq
-        run: sudo apt-get install jq
+      # Step 1: Set up JSON Parsing
+      - name: Cache jq
+        uses: actions/cache@v3
+        with:
+          path: /usr/bin/jq
+          key: ${{ runner.os }}-jq-version-1.6
+          restore-keys: |
+            ${{ runner.os }}-jq-
+
+      - name: Install jq with Homebrew
+        run: |
+          # Install jq using Homebrew (macOS package manager)
+          brew install jq
 
       - name: Parse flavors from JSON
         id: set-flavors
         run: |
           FLAVORS_JSON=$(cat flavors.json)
-          ANDROID_PLATFORMS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_upload == true) | .value.platforms | .[]')
-
-          # Extract platforms for iOS (where is_ios_upload is true and is_upload is true)
-          IOS_PLATFORMS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_upload == true) | .value.platforms | .[]')
-
-          # Combine both lists (Android and iOS platforms) without duplicates
-          COMBINED_PLATFORMS=$(echo -e "$ANDROID_PLATFORMS_LIST\n$IOS_PLATFORMS_LIST" | sort -u)
-
-          # Format the platforms into a JSON array
-          PLATFORMS_ARRAY=$(echo "$COMBINED_PLATFORMS" | sed 's/^/"/;s/$/"/' | paste -sd "," -)
-          PLATFORMS_ARRAY="[$PLATFORMS_ARRAY]"
-
-          # Debug output
-          echo "Flavors to build for platforms: $PLATFORMS_ARRAY"
-
-          # Set the platforms as an environment variable for the next step
-          echo "PLATFORMS=$PLATFORMS_ARRAY" >> $GITHUB_ENV
+          FLAVORS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_upload == true) | .value.name')
+          FLAVORS_ARRAY=$(echo "$FLAVORS_LIST" | sed 's/^/"/;s/$/"/' | paste -sd "," -)
+          FLAVORS_ARRAY="[$FLAVORS_ARRAY]"
+          echo "Flavors to build: $FLAVORS_ARRAY"
+          echo "::set-output name=flavors::$FLAVORS_ARRAY"
   build:
     needs: parse
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
+    if: ${{ fromJson(needs.parse.outputs.flavors) != '[]' && fromJson(needs.parse.outputs.flavors) != '["null"]' }}
+    strategy:
+      matrix:
+        flavor: ${{ fromJson(needs.parse.outputs.flavors) }}
+        platform: [ios]
+      fail-fast: false
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Debug Print Platforms (After Setting GITHUB_ENV)
-        run: |
-          # Access the environment variable and print it
-          echo "PLATFORMS: $PLATFORMS"
+      # Cache Flutter SDK
+      - name: Cache Flutter SDK
+        uses: actions/cache@v3
+        with:
+          path: ~/.flutter
+          key: ${{ runner.os }}-flutter-sdk-${{ hashFiles('.flutter-version') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-sdk-
 
+      # Set up Flutter SDK
+      - name: Set up Flutter SDK
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.1'
+
+      # Set up Java 17 for Android
+      - name: Set up Java 17
+        if: matrix.platform == 'android'
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # Clean Flutter project
+      - name: Clean Flutter project
+        run: flutter clean
+
+      # Get Flutter dependencies
+      - name: Get Flutter dependencies
+        run: flutter pub get
+
+      # Install CocoaPods for iOS
+      - name: Install Pods
+        if: matrix.platform == 'ios'
+        run: |
+          cd ios
+          pod install
+
+      # Caching Flutter dependencies
+      - name: Cache Flutter Dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.pub-cache
+            build/
+          key: ${{ runner.os }}-flutter-deps-${{ hashFiles('pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-deps-
+
+      # Build for flavor and platform
+      - name: Build for flavor ${{ matrix.flavor }} on platform ${{ matrix.platform }}
+        run: |
+          FLAVOR="${{ matrix.flavor }}"
+          FLAVORS_JSON=$(cat flavors.json)
+          ENTRY_POINT=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .entrypoint")
+          VERSION=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .version")
+          BUILD_NUMBER=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .build_number")
+          KEYS=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"].keystore_base64")
+          KEY_ALIAS=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .key_alias")
+          KEY_PASSWORD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .key_password")
+          STORE_PASSWORD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .store_password")
+          IS_UPLOAD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .is_upload")
+          IS_IOS_UPLOAD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .is_ios_upload")
+
+          echo "Flavor: $FLAVOR"
+          echo "Entry Point: $ENTRY_POINT"
+          echo "Is Upload: $IS_UPLOAD"
+          echo "Build Number: $BUILD_NUMBER"
+          echo "Key Alias: $KEY_ALIAS"
+          echo "Key Password: $KEY_PASSWORD"
+          echo "Store Password: $STORE_PASSWORD"
+
+          if [[ "$IS_UPLOAD" == "true" ]]; then
+              mkdir -p keystore
+              echo "$KEYS" | base64 -d > keystore/$FLAVOR.keystore.jks
+              export KEYSTORE_PATH="keystore/$FLAVOR.keystore.jks"
+              export KEY_ALIAS
+              export KEY_PASSWORD
+              export STORE_PASSWORD
+
+              # iOS: Build only for "sandbox"
+              if [[ "${{ matrix.platform }}" == "ios" && "$FLAVOR" == "sandbox" ]]; then
+                  echo "Running iOS build for flavor: $FLAVOR"
+                  flutter build ios --flavor $FLAVOR --target=$ENTRY_POINT --release --build-name=$VERSION --build-number=$BUILD_NUMBER
+              fi
+
+              # Android: Build for "sandbox" and "production"
+              if [[ "${{ matrix.platform }}" == "android" ]]; then
+                  echo "Running Android build for flavor: $FLAVOR"
+                  flutter build apk --flavor $FLAVOR --target=$ENTRY_POINT --release --build-name=$VERSION --build-number=$BUILD_NUMBER
+              fi
+          else
+            echo "Skipping build for flavor $FLAVOR because is_upload is false."
+          fi
+
+      # Upload IPA for iOS (only for "sandbox" flavor)
+      - name: Upload IPA for flavor ${{ matrix.flavor }}
+        if: matrix.platform == 'ios' && success() && matrix.flavor == 'sandbox'
+        uses: actions/upload-artifact@v3
+        with:
+          name: "${{ matrix.flavor }}-release-ipa"
+          path: "build/ios/iphoneos/Runner.app"
+
+      # Upload APK for Android
+      - name: Upload APK for flavor ${{ matrix.flavor }}
+        if: matrix.platform == 'android' && success()
+        uses: actions/upload-artifact@v3
+        with:
+          name: "${{ matrix.flavor }}-release-apk"
+          path: "build/app/outputs/flutter-apk/app-release.apk"
