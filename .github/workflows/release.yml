@@ -213,7 +213,7 @@ jobs:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}  # Get the Slack bot token from GitHub secrets
         run: |
           # Define Slack channel and file path
-          CHANNEL="#general"  # Replace with your target Slack channel
+          CHANNEL="mi-mobile-team"  # Replace with your target Slack channel
           AAB_FILE_PATH="build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"  # Path to the generated .aab file
             
           # Check if the .aab file exists
