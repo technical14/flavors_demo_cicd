@@ -234,7 +234,6 @@ jobs:
         id: get-upload-url
         run: |
           FILE_PATH="build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"  # Adjust the file path as needed
-          SLACK_BOT_TOKEN="xoxb-8232907570615-8321747795585-BRXvISAJfp6DaqoAJ9J0kIFq"  # Replace with your actual Slack Bot Token
           CHANNEL_ID="C088FPW886T"
   
           if [ ! -f "${FILE_PATH}" ]; then
