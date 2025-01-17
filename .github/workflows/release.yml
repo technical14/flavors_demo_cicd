@@ -224,8 +224,8 @@ jobs:
             --data "file=$FILE_ID")
           
           echo "Shared Public Response: ${PUBLIC_URL_RESPONSE}"
-          PUBLIC_FILE_URL=$(echo "$PUBLIC_URL_RESPONSE" | jq -r '.files[0].permalink_public')
-          PUBLIC_FILE_URL_DOWNLOAD=$(echo "$PUBLIC_URL_RESPONSE" | jq -r '.files[0].url_private_download')
+          PUBLIC_FILE_URL=$(echo "$PUBLIC_URL_RESPONSE" | jq -r '.file.permalink_public')
+          PUBLIC_FILE_URL_DOWNLOAD=$(echo "$PUBLIC_URL_RESPONSE" | jq -r '.file.url_private_download')
           
           echo "Public URL for the PUBLIC_FILE_URL: $PUBLIC_FILE_URL"
           echo "Public URL for the PUBLIC_FILE_URL_DOWNLOAD: $PUBLIC_FILE_URL_DOWNLOAD"
