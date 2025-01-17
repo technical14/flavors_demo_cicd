@@ -237,7 +237,7 @@ jobs:
           fi
           
           NOTIFY_RESPONSE=$(curl -X POST "https://slack.com/api/chat.postMessage" \
-            -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             -d "channel=$CHANNEL_ID" \
             -d "text=File *$(basename ${FILE_PATH})* has been successfully uploaded to Slack.")
           
