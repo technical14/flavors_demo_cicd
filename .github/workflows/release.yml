@@ -223,14 +223,17 @@ jobs:
             -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             --data "file=$FILE_ID")
           
-          PUBLIC_FILE_URL=$(echo "$PUBLIC_URL_RESPONSE" | jq -r '.file.permalink_public')
+          echo "Shared Public Response: ${PUBLIC_URL_RESPONSE}"
+          PUBLIC_FILE_URL=$(echo "$PUBLIC_URL_RESPONSE" | jq -r '.files[0].permalink_public')
+          PUBLIC_FILE_URL_DOWNLOAD=$(echo "$PUBLIC_URL_RESPONSE" | jq -r '.files[0].url_private_download')
+          
+          echo "Public URL for the PUBLIC_FILE_URL: $PUBLIC_FILE_URL"
+          echo "Public URL for the PUBLIC_FILE_URL_DOWNLOAD: $PUBLIC_FILE_URL_DOWNLOAD"
           
           if [ -z "$PUBLIC_FILE_URL" ]; then
             echo "Error: Could not retrieve the public URL for the file."
             exit 1
           fi
-          
-          echo "Public URL for the file: $PUBLIC_FILE_URL"
           
           # Step 4: Complete the file upload via Slack API
           COMPLETE_UPLOAD_RESPONSE=$(curl -X POST https://slack.com/api/files.completeUploadExternal \
