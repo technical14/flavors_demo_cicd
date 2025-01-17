@@ -234,8 +234,6 @@ jobs:
         id: get-upload-url
         run: |
           FILE_PATH="build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"  # Adjust the file path as needed
-          SLACK_BOT_TOKEN="xoxb-8232907570615-8321747795585-BRXvISAJfp6DaqoAJ9J0kIFq"  # Replace with your actual Slack Bot Token
-          CHANNEL_ID="C088FPW886T"
           
           # Check if the .aab file exists
           if [ ! -f "${FILE_PATH}" ]; then
@@ -248,10 +246,10 @@ jobs:
           echo "File size: ${FILE_SIZE} bytes"
           
           UPLOAD_URL_RESPONSE=$(curl -X POST https://slack.com/api/files.getUploadURLExternal \
-            -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
+            -H "Authorization: Bearer ${{ secrets.SLACK_BOT_TOKEN }}" \
             -d "filename=app-${{ matrix.flavor }}-release.aab" \
             -d "filetype=application/octet-stream" \
-            -d "channels=${CHANNEL_ID}" \
+            -d "channels=${{ secrets.CHANNEL_ID }}" \
             -d "initial_comment=Here is the latest Android App Bundle (.aab) file!" \
             -d "length=${FILE_SIZE}")
           
