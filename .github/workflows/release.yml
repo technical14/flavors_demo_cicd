@@ -168,7 +168,7 @@ jobs:
       - name: Get Upload URL from Slack
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          CHANNEL_ID: C088FPW886T  # The channel ID or name to upload the file to
+          CHANNEL_ID: C089T0M0FEC  # The channel ID or name to upload the file to
         run: |
           FILE_PATH="build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"  # Adjust the file path as needed
           
