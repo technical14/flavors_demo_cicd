@@ -230,44 +230,50 @@ jobs:
 #            -H "Authorization: Bearer ${SLACK_BOT_TOKEN}"
 
       # Step 12: Upload AAB to Slack
-      - name: Set up Slack channel ID and file path
-        run: |
-          echo "CHANNEL_ID=C088FPW886T" >> $GITHUB_ENV  # Replace with your Slack channel ID
-          echo "FILE_PATH=build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab" >> $GITHUB_ENV
-
       - name: Get Upload URL from Slack
         id: get-upload-url
         run: |
-          UPLOAD_URL=$(curl -X POST https://slack.com/api/files.getUploadURLExternal \
+          UPLOAD_URL_RESPONSE=$(curl -X POST https://slack.com/api/files.getUploadURLExternal \
             -H "Authorization: Bearer ${{ secrets.SLACK_BOT_TOKEN }}" \
-            -d "filename=app-sandbox-release.aab" \
+            -d "filename=app-${{ matrix.flavor }}-release.aab" \
             -d "filetype=application/octet-stream" \
-            -d "channels=${{ env.CHANNEL_ID }}" \
-            -d "initial_comment=Here is the latest Android App Bundle (.aab) file!" \
-            | jq -r '.upload_url')
+            -d "channels=${{ secrets.CHANNEL_ID }}" \
+            -d "initial_comment=Here is the latest Android App Bundle (.aab) file!")
           
           # Print the full response to understand what's being returned
-          echo "Upload URL Response: ${UPLOAD_URL}"
+          echo "Upload URL Response: ${UPLOAD_URL_RESPONSE}"
           
           if [ -z "${UPLOAD_URL}" ] || [ "${UPLOAD_URL}" == "null" ]; then
             echo "Error: Upload URL is not set properly."
             exit 1
           fi
           
-          echo "UPLOAD_URL=$UPLOAD_URL" >> $GITHUB_ENV
-
-      - name: Upload .AAB file to Slack
-        run: |
-          curl -X POST "${{ env.UPLOAD_URL }}" \
-            -F "file=@${{ env.FILE_PATH }}" \
+          echo "Successfully retrieved upload URL: ${UPLOAD_URL}"
+          
+          FILE_PATH="build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"  # Adjust the file path as needed
+          
+          # Check if the .aab file exists
+          if [ ! -f "${FILE_PATH}" ]; then
+            echo "Error: .aab file not found at ${FILE_PATH}"
+            exit 1
+          fi
+          
+          # Step 6: Perform the file upload to Slack using curl
+          UPLOAD_RESPONSE=$(curl -X POST "${UPLOAD_URL}" \
+            -F "file=@${FILE_PATH}" \
             -F "filename=app-sandbox-release.aab" \
-            -F "filetype=application/octet-stream"
+            -F "filetype=application/octet-stream")
+          
+          # Print the upload response to inspect the result
+          echo "Upload Response: ${UPLOAD_RESPONSE}"
+          
+          # Step 7: Optionally, check if the upload was successful
+          UPLOAD_STATUS=$(echo $UPLOAD_RESPONSE | jq -r '.ok')
 
-      - name: Complete the file upload to Slack
-        run: |
-          curl -X POST https://slack.com/api/files.completeUploadExternal \
-            -H "Authorization: Bearer ${{ secrets.SLACK_BOT_TOKEN }}" \
-            -d "file=F12345678"  # Replace with actual file ID
-            -d "channels=${{ env.CHANNEL_ID }}" \
-            -d "initial_comment=The file has been uploaded successfully!"
+          if [ "$UPLOAD_STATUS" == "true" ]; then
+            echo "File uploaded successfully!"
+          else
+            echo "Error: File upload failed."
+            exit 1
+          fi
 
