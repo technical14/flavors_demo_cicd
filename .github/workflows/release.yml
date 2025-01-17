@@ -244,19 +244,19 @@ jobs:
           NOTIFY_RESPONSE=$(curl -X POST https://slack.com/api/chat.postMessage \
           -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
           -H "Content-Type: application/json" \
-          --data '{
-            "channel": "$CHANNEL_ID", 
+          --data "$(printf '{
+            "channel": "%s", 
             "text": "Upload aab file",
             "blocks": [
               {
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "File *$(basename ${FILE_PATH})* has been successfully uploaded to Slack."
+                  "text": "File *%s* has been successfully uploaded to Slack."
                 }
               }
             ]
-          }')
+          }' "$CHANNEL_ID" "$(basename ${FILE_PATH})")")
           
           echo "Notification Response: ${NOTIFY_RESPONSE}"
           
