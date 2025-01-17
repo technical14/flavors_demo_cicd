@@ -207,7 +207,7 @@ jobs:
 #          name: "${{ matrix.flavor }}-release-aab"
 #          path: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
 
-      # Step 12: Upload AAB to GitHub Actions Artifacts (Optional, if you want to store the AABs as artifacts) success() always()
+      # Step 12: Upload AAB to Slack
       - name: Upload .aab to Slack
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}  # Get the Slack bot token from GitHub secrets
