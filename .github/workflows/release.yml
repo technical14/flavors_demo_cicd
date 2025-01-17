@@ -233,12 +233,25 @@ jobs:
       - name: Get Upload URL from Slack
         id: get-upload-url
         run: |
+          FILE_PATH="build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"  # Adjust the file path as needed
+          
+          # Check if the .aab file exists
+          if [ ! -f "${FILE_PATH}" ]; then
+            echo "Error: .aab file not found at ${FILE_PATH}"
+            exit 1
+          fi
+  
+          # Get the file size in bytes
+          FILE_SIZE=$(stat -c %s "${FILE_PATH}")
+          echo "File size: ${FILE_SIZE} bytes"
+          
           UPLOAD_URL_RESPONSE=$(curl -X POST https://slack.com/api/files.getUploadURLExternal \
             -H "Authorization: Bearer ${{ secrets.SLACK_BOT_TOKEN }}" \
             -d "filename=app-${{ matrix.flavor }}-release.aab" \
             -d "filetype=application/octet-stream" \
             -d "channels=${{ secrets.CHANNEL_ID }}" \
-            -d "initial_comment=Here is the latest Android App Bundle (.aab) file!")
+            -d "initial_comment=Here is the latest Android App Bundle (.aab) file!" \
+            -d "length=${FILE_SIZE}")
           
           # Print the full response to understand what's being returned
           echo "Upload URL Response: ${UPLOAD_URL_RESPONSE}"
@@ -249,19 +262,11 @@ jobs:
           fi
           
           echo "Successfully retrieved upload URL: ${UPLOAD_URL}"
-          
-          FILE_PATH="build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"  # Adjust the file path as needed
-          
-          # Check if the .aab file exists
-          if [ ! -f "${FILE_PATH}" ]; then
-            echo "Error: .aab file not found at ${FILE_PATH}"
-            exit 1
-          fi
-          
+                    
           # Step 6: Perform the file upload to Slack using curl
           UPLOAD_RESPONSE=$(curl -X POST "${UPLOAD_URL}" \
             -F "file=@${FILE_PATH}" \
-            -F "filename=app-sandbox-release.aab" \
+            -F "filename=app-${{ matrix.flavor }}-release.aab" \
             -F "filetype=application/octet-stream")
           
           # Print the upload response to inspect the result
