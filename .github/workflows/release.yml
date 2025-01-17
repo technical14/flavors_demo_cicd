@@ -223,6 +223,7 @@ jobs:
           COMPLETE_UPLOAD_RESPONSE=$(curl -X POST "https://slack.com/api/files.completeUploadExternal" \
             -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             -d "file_id=${FILE_ID}" \
+            -d "file=${UPLOAD_URL}" \
             -d "channels=$CHANNEL_ID" \
             -d "title=$(basename ${FILE_PATH})" \
             -d "initial_comment=Here is the latest Android App Bundle (.aab) file!")
