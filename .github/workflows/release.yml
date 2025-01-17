@@ -169,7 +169,6 @@ jobs:
         id: get-upload-url
         run: |
           FILE_PATH="build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"  # Adjust the file path as needed
-          CHANNEL_ID = "C088FPW886T"
           
           # Check if the .aab file exists
           if [ ! -f "${FILE_PATH}" ]; then
@@ -185,7 +184,7 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.SLACK_BOT_TOKEN }}" \
             -d "filename=app-${{ matrix.flavor }}-release.aab" \
             -d "filetype=application/octet-stream" \
-            -d "channels=${CHANNEL_ID}" \
+            -d "channels=C088FPW886T" \
             -d "initial_comment=Here is the latest Android App Bundle (.aab) file!" \
             -d "length=${FILE_SIZE}")
           
