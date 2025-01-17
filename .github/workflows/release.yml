@@ -212,11 +212,42 @@ jobs:
           # Print the upload response to inspect the result
           echo "Upload Response: ${UPLOAD_RESPONSE}"
           
+          FILE_ID=$(echo "$UPLOAD_URL_RESPONSE" | jq -r '.file_id')
+          
+          if [ -z "$FILE_ID" ] || [ "$FILE_ID" == "null" ]; then
+            echo "Error: Could not retrieve file_id."
+            exit 1
+          fi
+          
+          # Step 4: Complete the file upload via Slack API
+          COMPLETE_UPLOAD_RESPONSE=$(curl -X POST "https://slack.com/api/files.completeUploadExternal" \
+            -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
+            -d "file_id=${FILE_ID}" \
+            -d "channels=$CHANNEL_ID" \
+            -d "title=$(basename ${FILE_PATH})" \
+            -d "initial_comment=Here is the latest Android App Bundle (.aab) file!")
+          
+          echo "Complete Upload Response: ${COMPLETE_UPLOAD_RESPONSE}"
+          
+          if [[ "$COMPLETE_UPLOAD_RESPONSE" == *"ok\":true"* ]]; then
+            echo "File uploaded and completed successfully!"
+            else
+          echo "Error: File upload completion failed."
+            exit 1
+          fi
+          
+          NOTIFY_RESPONSE=$(curl -X POST "https://slack.com/api/chat.postMessage" \
+            -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
+            -d "channel=$CHANNEL_ID" \
+            -d "text=File *$(basename ${FILE_PATH})* has been successfully uploaded to Slack.")
+          
+          echo "Notification Response: ${NOTIFY_RESPONSE}"
+          
           # Step 7: Optionally, check if the upload was successful
-          if [[ "$UPLOAD_RESPONSE" == *"OK"* ]]; then
-            echo "File uploaded successfully!"
+          if [[ "$NOTIFY_RESPONSE" == *"ok\":true"* ]]; then
+            echo "Notification sent to Slack successfully!"
           else
-            echo "Error: File upload failed."
+            echo "Error: Failed to send notification to Slack."
             exit 1
           fi
 
