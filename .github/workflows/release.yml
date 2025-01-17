@@ -256,6 +256,9 @@ jobs:
           # Print the full response to understand what's being returned
           echo "Upload URL Response: ${UPLOAD_URL_RESPONSE}"
           
+          # Step 4: Extract the upload_url from the response
+          UPLOAD_URL=$(echo $UPLOAD_URL_RESPONSE | jq -r '.upload_url')
+          
           if [ -z "${UPLOAD_URL}" ] || [ "${UPLOAD_URL}" == "null" ]; then
             echo "Error: Upload URL is not set properly."
             exit 1
