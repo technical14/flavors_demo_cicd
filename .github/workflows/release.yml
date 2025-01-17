@@ -233,6 +233,12 @@ jobs:
           }' "$FILE_ID" "${{ matrix.flavor }}")")
           
           echo "Complete Upload Response: ${COMPLETE_UPLOAD_RESPONSE}"
+          FILE_URL=$(echo "$COMPLETE_UPLOAD_RESPONSE" | jq -r '.files.url_private')
+          
+          if [ -z "$FILE_URL" ] || [ "$FILE_URL" == "null" ]; then
+            echo "Error: Could not retrieve file URL."
+            exit 1
+          fi
           
           if echo "$COMPLETE_UPLOAD_RESPONSE" | grep -q '"ok":true'; then
             echo "File upload completed successfully!"
@@ -256,7 +262,7 @@ jobs:
                 }
               }
             ]
-          }' "$CHANNEL_ID" "$(basename ${FILE_PATH})")")
+          }' "$CHANNEL_ID" "$(basename ${FILE_PATH})" "$FILE_URL")")
           
           echo "Notification Response: ${NOTIFY_RESPONSE}"
           
