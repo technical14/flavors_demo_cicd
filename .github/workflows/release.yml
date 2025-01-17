@@ -276,9 +276,7 @@ jobs:
           echo "Upload Response: ${UPLOAD_RESPONSE}"
           
           # Step 7: Optionally, check if the upload was successful
-          UPLOAD_STATUS=$(echo $UPLOAD_RESPONSE | jq -r '.ok')
-
-          if [ "$UPLOAD_STATUS" =~ "OK" ]; then
+          if [ "$UPLOAD_RESPONSE" =~ "OK" ]; then
             echo "File uploaded successfully!"
           else
             echo "Error: File upload failed."
