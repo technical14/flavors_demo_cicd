@@ -245,6 +245,15 @@ jobs:
             -d "channels=${{ env.CHANNEL_ID }}" \
             -d "initial_comment=Here is the latest Android App Bundle (.aab) file!" \
             | jq -r '.upload_url')
+          
+          # Print the full response to understand what's being returned
+          echo "Upload URL Response: ${UPLOAD_URL}"
+          
+          if [ -z "${UPLOAD_URL}" ] || [ "${UPLOAD_URL}" == "null" ]; then
+            echo "Error: Upload URL is not set properly."
+            exit 1
+          fi
+          
           echo "UPLOAD_URL=$UPLOAD_URL" >> $GITHUB_ENV
 
       - name: Upload .AAB file to Slack
