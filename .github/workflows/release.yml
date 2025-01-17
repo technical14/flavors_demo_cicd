@@ -3,19 +3,19 @@ name: Build Flutter APK
 on:
   push:
     branches:
-      - main
+      - main   # Trigger action on push to the 'main' branch
 
 jobs:
   parse:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     outputs:
-      platforms: ${{ steps.set-platforms.outputs.platforms }}
       flavors: ${{ steps.set-flavors.outputs.flavors }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # Step 1: Set up JSON Parsing
+      # Step 1: Set up JSON Parsing for create metrix
+      # Cache jq
       - name: Cache jq
         uses: actions/cache@v3
         with:
@@ -24,30 +24,36 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-jq-
 
-      - name: Install jq with Homebrew
-        run: |
-          # Install jq using Homebrew (macOS package manager)
-          brew install jq
+      # Set up JSON Parsing
+      - name: Install jq
+        run: sudo apt-get install jq
 
       - name: Parse flavors from JSON
         id: set-flavors
         run: |
+          # Read the JSON file and extract the list of flavors where is_upload is true
           FLAVORS_JSON=$(cat flavors.json)
           FLAVORS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_upload == true) | .value.name')
+
+          # Add quotes around each flavor to properly form the array
           FLAVORS_ARRAY=$(echo "$FLAVORS_LIST" | sed 's/^/"/;s/$/"/' | paste -sd "," -)
           FLAVORS_ARRAY="[$FLAVORS_ARRAY]"
+
+          # Output the flavors array
           echo "Flavors to build: $FLAVORS_ARRAY"
+
+          # Set the flavors array as an output of the step
           echo "::set-output name=flavors::$FLAVORS_ARRAY"
   build:
     needs: parse
-    runs-on: macos-latest
-    if: ${{ fromJson(needs.parse.outputs.flavors) != '[]' && fromJson(needs.parse.outputs.flavors) != '["null"]' }}
+    runs-on: ubuntu-latest
+    if: ${{ fromJson(needs.parse.outputs.flavors) != '[]' && fromJson(needs.parse.outputs.flavors) != '["null"]' }}  # Only run if flavors are not empty or ["null"]
     strategy:
       matrix:
         flavor: ${{ fromJson(needs.parse.outputs.flavors) }}
-        platform: [ios]
       fail-fast: false
     steps:
+      # Step 2: Checkout the repository code
       - name: Checkout code
         uses: actions/checkout@v2
 
@@ -58,39 +64,41 @@ jobs:
           path: ~/.flutter
           key: ${{ runner.os }}-flutter-sdk-${{ hashFiles('.flutter-version') }}
           restore-keys: |
-            ${{ runner.os }}-flutter-sdk-
+            ${{ runner.os }}-flutter-sdk-       
 
-      # Set up Flutter SDK
+      # Step 3: Set up Flutter SDK
       - name: Set up Flutter SDK
         if: steps.cache.outputs.cache-hit != 'true'
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.1'
+          flutter-version: '3.24.1'  # You can specify a specific Flutter version here, like '3.10.4' as per your Android Studio
 
-      # Set up Java 17 for Android
+      # Step 4: Set up Java 17
       - name: Set up Java 17
-        if: matrix.platform == 'android'
         uses: actions/setup-java@v2
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          java-version: '17'  # Specify Java as per your Android Studio (gradle-7.5-all version wise change)
+          distribution: 'temurin'  # Use AdoptOpenJDK distribution
 
-      # Clean Flutter project
-      - name: Clean Flutter project
+      # Cache jq
+      - name: Cache jq
+        uses: actions/cache@v3
+        with:
+          path: /usr/bin/jq
+          key: ${{ runner.os }}-jq-version-1.6
+          restore-keys: |
+            ${{ runner.os }}-jq-
+
+      # Step 5: Set up JSON Parsing
+      - name: Install jq
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: sudo apt-get install jq
+
+      # Step 6: flutter project clean
+      - name: Clean project
         run: flutter clean
 
-      # Get Flutter dependencies
-      - name: Get Flutter dependencies
-        run: flutter pub get
-
-      # Install CocoaPods for iOS
-      - name: Install Pods
-        if: matrix.platform == 'ios'
-        run: |
-          cd ios
-          pod install
-
-      # Caching Flutter dependencies
+      # Caching Flutter dependencies (caching Flutter dependencies, if needed)
       - name: Cache Flutter Dependencies
         uses: actions/cache@v3
         with:
@@ -101,64 +109,123 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-flutter-deps-
 
-      # Build for flavor and platform
-      - name: Build for flavor ${{ matrix.flavor }} on platform ${{ matrix.platform }}
+      # Step 7: Install dependencies
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          flutter pub get  # Get Flutter project dependencies
+
+      # Step 8: Create APK and AAB
+      - name: Build APK for flavor ${{ matrix.flavor }}
         run: |
           FLAVOR="${{ matrix.flavor }}"
-          FLAVORS_JSON=$(cat flavors.json)
+          FLAVORS_JSON=$(cat flavors.json)  # Load the flavors JSON file
+          
+          # Extract the entrypoint for the specific flavor (without a for loop)
           ENTRY_POINT=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .entrypoint")
           VERSION=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .version")
           BUILD_NUMBER=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .build_number")
           KEYS=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"].keystore_base64")
-          KEY_ALIAS=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .key_alias")
-          KEY_PASSWORD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .key_password")
-          STORE_PASSWORD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .store_password")
+          KEY_ALIAS=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"].key_alias")
+          KEY_PASSWORD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"].key_password")
+          STORE_PASSWORD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"].store_password")
+          
+          # If you want to extract other data, you can do it similarly:
           IS_UPLOAD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .is_upload")
-          IS_IOS_UPLOAD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .is_ios_upload")
-
+          
+          # Print the extracted data
           echo "Flavor: $FLAVOR"
           echo "Entry Point: $ENTRY_POINT"
           echo "Is Upload: $IS_UPLOAD"
           echo "Build Number: $BUILD_NUMBER"
-          echo "Key Alias: $KEY_ALIAS"
-          echo "Key Password: $KEY_PASSWORD"
-          echo "Store Password: $STORE_PASSWORD"
-
-          if [[ "$IS_UPLOAD" == "true" ]]; then
+          
+          # Check if is_upload is true before proceeding with the build
+          if [[ "$IS_UPLOAD" == "true" ]]; then         
+          
+              # Decode the keystore from base64
               mkdir -p keystore
               echo "$KEYS" | base64 -d > keystore/$FLAVOR.keystore.jks
+          
+              # Set environment variables for signing
               export KEYSTORE_PATH="keystore/$FLAVOR.keystore.jks"
               export KEY_ALIAS
               export KEY_PASSWORD
               export STORE_PASSWORD
-
-              # iOS: Build only for "sandbox"
-              if [[ "${{ matrix.platform }}" == "ios" && "$FLAVOR" == "sandbox" ]]; then
-                  echo "Running iOS build for flavor: $FLAVOR"
-                  flutter build ios --flavor $FLAVOR --target=$ENTRY_POINT --release --build-name=$VERSION --build-number=$BUILD_NUMBER
-              fi
-
-              # Android: Build for "sandbox" and "production"
-              if [[ "${{ matrix.platform }}" == "android" ]]; then
-                  echo "Running Android build for flavor: $FLAVOR"
-                  flutter build apk --flavor $FLAVOR --target=$ENTRY_POINT --release --build-name=$VERSION --build-number=$BUILD_NUMBER
-              fi
+          
+              flutter build appbundle \
+                --flavor $FLAVOR \
+                --target=$ENTRY_POINT \
+                --release \
+                --build-name=$VERSION \
+                --build-number=$BUILD_NUMBER
+          
+              echo "Successfully built APK and AAB for $FLAVOR"
           else
             echo "Skipping build for flavor $FLAVOR because is_upload is false."
+          fi          
+
+      # Step 9: Upload APK to GitHub Actions Artifacts (Optional, if you want to store the AABs as artifacts) success() always()
+#      - name: Upload APK for flavor ${{ matrix.flavor }}
+#        if: success()
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: "${{ matrix.flavor }}-release-apk"
+#          path: "build/app/outputs/flutter-apk/app-${{ matrix.flavor }}-release.apk"
+
+      # Step 10: Extract service_account from flavors.json use When direct (Upload in google playstore)
+#      - name: Extracting service_account from flavors.json
+#        id: extract-application-id
+#        run: |
+#          service_account=$(jq -r '.flavors["${{ matrix.flavor }}"].service_account' flavors.json)
+#          echo "$service_account" > service_account.json
+#          cat service_account.json
+#
+#          PACKAGE_NAME=$(jq -r --arg flavor "${{ matrix.flavor }}" '.flavors[] | select(.name == $flavor) | .application_id' flavors.json)
+#
+#          # Output the package name for debugging purposes
+#          echo "Package name for $FLAVOR flavor: $PACKAGE_NAME"
+#
+#          # Set the extracted package name as an output for use in later steps
+#          echo "::set-output name=PACKAGE_NAME::$PACKAGE_NAME"  # Correct way to set output
+
+      # Step 11: Deploy to Play Store (Upload in google playstore)
+#      - name: Deploying app to Play Store
+#        id: deploy
+#        if: ${{ steps.extract-application-id.outputs.PACKAGE_NAME != '' && steps.extract-application-id.outputs.PACKAGE_NAME != 'null' }}
+#        uses: r0adkll/upload-google-play@v1.1.3
+#        with:
+#          serviceAccountJson: service_account.json
+#          packageName: ${{ steps.extract-application-id.outputs.PACKAGE_NAME }}  # Use the extracted package name directly
+#          releaseFiles: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
+#          track: production
+#          status: 'completed'
+
+      # Step 12: Upload AAB to GitHub Actions Artifacts (Optional, if you want to store the AABs as artifacts) success() always()
+#      - name: Upload AAB for flavor ${{ matrix.flavor }}
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: "${{ matrix.flavor }}-release-aab"
+#          path: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
+
+      # Step 12: Upload AAB to GitHub Actions Artifacts (Optional, if you want to store the AABs as artifacts) success() always()
+      - name: Upload .aab to Slack
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}  # Get the Slack bot token from GitHub secrets
+        run: |
+          # Define Slack channel and file path
+          CHANNEL="#general"  # Replace with your target Slack channel
+          AAB_FILE_PATH="build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"  # Path to the generated .aab file
+            
+          # Check if the .aab file exists
+          if [ ! -f "${AAB_FILE_PATH}" ]; then
+            echo "Error: .aab file not found at ${AAB_FILE_PATH}"
+            exit 1
           fi
+            
+          # Upload the .aab file to Slack using curl
+          curl -X POST https://slack.com/api/files.upload \
+            -F "file=@${AAB_FILE_PATH}" \
+            -F "channels=${CHANNEL}" \
+            -F "initial_comment=Here is the latest Android App Bundle (.aab) file!" \
+            -H "Authorization: Bearer ${SLACK_BOT_TOKEN}"
 
-      # Upload IPA for iOS (only for "sandbox" flavor)
-      - name: Upload IPA for flavor ${{ matrix.flavor }}
-        if: matrix.platform == 'ios' && success() && matrix.flavor == 'sandbox'
-        uses: actions/upload-artifact@v3
-        with:
-          name: "${{ matrix.flavor }}-release-ipa"
-          path: "build/ios/iphoneos/Runner.app"
-
-      # Upload APK for Android
-      - name: Upload APK for flavor ${{ matrix.flavor }}
-        if: matrix.platform == 'android' && success()
-        uses: actions/upload-artifact@v3
-        with:
-          name: "${{ matrix.flavor }}-release-apk"
-          path: "build/app/outputs/flutter-apk/app-release.apk"

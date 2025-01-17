@@ -28,7 +28,7 @@
       "application_id": "production.app.com",
       "app_name": "Production",
       "keystore_path": "keystore/production.jks",
-      "is_upload": true,
+      "is_upload": false,
       "is_ios_upload": false,
       "platforms": ["android"]
     },
