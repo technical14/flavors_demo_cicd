@@ -170,80 +170,47 @@ jobs:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           CHANNEL_ID: C089T0M0FEC  # The channel ID or name to upload the file to
         run: |
-          FILE_PATH="build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"  # Adjust the file path as needed
+          FILE_PATH="build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"  # Adjust to your file path
           
           # Check if the .aab file exists
           if [ ! -f "${FILE_PATH}" ]; then
             echo "Error: .aab file not found at ${FILE_PATH}"
             exit 1
           fi
-  
-          # Get the file size in bytes
+          
+          # Get file size
           FILE_SIZE=$(stat -c %s "${FILE_PATH}")
           echo "File size: ${FILE_SIZE} bytes"
           
-          UPLOAD_URL_RESPONSE=$(curl -X POST https://slack.com/api/files.getUploadURLExternal \
+          # Step 1: Upload the file to Slack directly using the 'files.upload' API
+          UPLOAD_RESPONSE=$(curl -X POST "https://slack.com/api/files.upload" \
             -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -d "filename=app-${{ matrix.flavor }}-release.aab" \
-            -d "filetype=application/octet-stream" \
-            -d "channels=$CHANNEL_ID" \
-            -d "initial_comment=Here is the latest Android App Bundle (.aab) file!" \
-            -d "length=${FILE_SIZE}")
-          
-          # Print the full response to understand what's being returned
-          echo "Upload URL Response: ${UPLOAD_URL_RESPONSE}"
-          
-          # Step 4: Extract the upload_url from the response
-          UPLOAD_URL=$(echo $UPLOAD_URL_RESPONSE | jq -r '.upload_url')
-          
-          if [ -z "${UPLOAD_URL}" ] || [ "${UPLOAD_URL}" == "null" ]; then
-            echo "Error: Upload URL is not set properly."
-            exit 1
-          fi
-          
-          echo "Successfully retrieved upload URL: ${UPLOAD_URL}"
-                    
-          # Step 6: Perform the file upload to Slack using curl
-          UPLOAD_RESPONSE=$(curl -X POST "${UPLOAD_URL}" \
             -F "file=@${FILE_PATH}" \
             -F "filename=app-${{ matrix.flavor }}-release.aab" \
-            -F "filetype=application/octet-stream")
+            -F "filetype=application/octet-stream" \
+            -F "channels=$CHANNEL_ID" \
+            -F "initial_comment=Here is the latest Android App Bundle (.aab) file!")
           
           # Print the upload response to inspect the result
           echo "Upload Response: ${UPLOAD_RESPONSE}"
           
-          FILE_ID=$(echo "$UPLOAD_URL_RESPONSE" | jq -r '.file_id')
-          
-          if [ -z "$FILE_ID" ] || [ "$FILE_ID" == "null" ]; then
-            echo "Error: Could not retrieve file_id."
+          # Step 2: Check if the upload was successful
+          if [[ "$UPLOAD_RESPONSE" == *"ok\":true"* ]]; then
+            echo "File uploaded successfully to Slack!"
+          else
+            echo "Error: File upload failed."
             exit 1
           fi
           
-          # Step 4: Complete the file upload via Slack API
-          COMPLETE_UPLOAD_RESPONSE=$(curl -X POST "https://slack.com/api/files.completeUploadExternal" \
-            -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
-            -d "file_id=${FILE_ID}" \
-            -d "channels=$CHANNEL_ID" \
-            -d "title=$(basename ${FILE_PATH})" \
-            -d "initial_comment=Here is the latest Android App Bundle (.aab) file!")
-          
-          echo "Complete Upload Response: ${COMPLETE_UPLOAD_RESPONSE}"
-          
-          if [[ "$COMPLETE_UPLOAD_RESPONSE" == *"ok\":true"* ]]; then
-            echo "File uploaded and completed successfully!"
-            else
-          echo "Error: File upload completion failed."
-            exit 1
-          fi
-          
+          # Step 3: Send a notification to Slack (optional)
           NOTIFY_RESPONSE=$(curl -X POST "https://slack.com/api/chat.postMessage" \
-            -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             -d "channel=$CHANNEL_ID" \
             -d "text=File *$(basename ${FILE_PATH})* has been successfully uploaded to Slack.")
           
           echo "Notification Response: ${NOTIFY_RESPONSE}"
           
-          # Step 7: Optionally, check if the upload was successful
+          # Step 4: Optionally check if the notification was successful
           if [[ "$NOTIFY_RESPONSE" == *"ok\":true"* ]]; then
             echo "Notification sent to Slack successfully!"
           else
