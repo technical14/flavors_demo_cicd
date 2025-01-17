@@ -223,21 +223,21 @@ jobs:
           COMPLETE_UPLOAD_RESPONSE=$(curl -X POST https://slack.com/api/files.completeUploadExternal \
           -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
           -H "Content-Type: application/json" \
-          --data '{
+          --data "$(printf '{
             "files": [
               {
-                "id": ${FILE_ID},
-                "title": "slack-test"
+                "id": "%s",
+                "title": "app-%s-release.aab"
               }
             ]
-          }')
+          }' "$FILE_ID" "${{ matrix.flavor }}")")
           
           echo "Complete Upload Response: ${COMPLETE_UPLOAD_RESPONSE}"
           
-          if [[ "$COMPLETE_UPLOAD_RESPONSE" == *"ok\":true"* ]]; then
-            echo "File uploaded and completed successfully!"
-            else
-          echo "Error: File upload completion failed."
+          if echo "$COMPLETE_UPLOAD_RESPONSE" | grep -q '"ok":true'; then
+            echo "File upload completed successfully!"
+          else
+            echo "Error: File upload completion failed."
             exit 1
           fi
           
