@@ -171,21 +171,11 @@ jobs:
           project_id: fir-demo-12ed5  # Replace with your Google Cloud project ID
           credentials_json: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}  # The secret containing the Google OAuth credentials
 
-      # Step 2: Create a folder in Google Drive
-      - name: Create a folder in Google Drive
-        run: |
-          # Define the folder name (you can customize this)
-          FOLDER_NAME="AAB Upload Folder-${{ github.sha }}"  # Using commit SHA for a unique folder name
-          # Create the folder using gcloud
-          FOLDER_ID=$(gcloud drive folders create --name="${FOLDER_NAME}" --query "id" --format="value(name)")
-          echo "Created folder with ID: ${FOLDER_ID}"
-
       - name: Upload AAB file to Google Drive
         uses: google-drive-upload-action@v1
         with:
           file_path: build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab  # Replace with the correct path to your .aab file
           file_name: app-${{ matrix.flavor }}-release.aab  # The name the file will have on Google Drive
-          folder_id: ${{ steps.create_folder.outputs.folder_id }}  # The ID of the created folder
 
 
       # Step 12: Upload AAB to Slack
