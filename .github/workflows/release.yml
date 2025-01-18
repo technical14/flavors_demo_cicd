@@ -206,11 +206,8 @@ jobs:
           
           # Step 6: Perform the file upload to Slack using curl
           UPLOAD_RESPONSE=$(curl -X POST "${UPLOAD_URL}" \
-            -F "filename=@app-${{ matrix.flavor }}-release.aab")
-          
-          UPLOAD_RESPONSE=$(curl -X POST "${UPLOAD_URL}" \
             -F "file=@${FILE_PATH}" \
-            -F "filename=app-sandbox-release.aab" \
+            -F "filename=app-${{ matrix.flavor }}-release.aab" \
             -F "filetype=application/x-android-app-bundle")
           
           # Print the upload response to inspect the result
