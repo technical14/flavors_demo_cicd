@@ -162,7 +162,13 @@ jobs:
               echo "Successfully built APK and AAB for $FLAVOR"
           else
             echo "Skipping build for flavor $FLAVOR because is_upload is false."
-          fi      
+          fi
+
+      # Step 12: Install Google Cloud SDK
+      - name: Install Google Cloud SDK
+        run: |
+          echo "Installing Google Cloud SDK..."
+          sudo apt-get update && sudo apt-get install -y google-cloud-sdk
 
       # Step 12: Upload AAB to Slack
       - name: Set up Google Drive credentials
@@ -175,7 +181,7 @@ jobs:
       - name: Create folder in Google Drive
         id: create_folder
         run: |
-          FOLDER_NAME="AAB Upload Folder-${{ github.sha }}"
+          FOLDER_NAME="AAB Upload Folder"
           # Create the folder via Google Drive API
           FOLDER_ID=$(curl -X POST \
             -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
