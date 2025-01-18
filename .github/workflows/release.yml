@@ -168,6 +168,7 @@ jobs:
       - name: Get Upload URL from Slack
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          USER_OAUTH_TOKEN: ${{ secrets.USER_OAUTH_TOKEN }}
           CHANNEL_ID: C089T0M0FEC  # The channel ID or name to upload the file to
         run: |
           FILE_PATH="build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"  # Adjust the file path as needed
@@ -220,7 +221,7 @@ jobs:
           fi
           
           PUBLIC_URL_RESPONSE=$(curl -X POST https://slack.com/api/files.sharedPublicURL \
-            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H "Authorization: Bearer $USER_OAUTH_TOKEN" \
             --data "file=$FILE_ID")
           
           echo "Shared Public Response: ${PUBLIC_URL_RESPONSE}"
