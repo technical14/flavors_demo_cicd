@@ -207,11 +207,10 @@ jobs:
                     
           # Step 6: Perform the file upload to Slack using curl
           UPLOAD_RESPONSE=$(curl -X POST "${UPLOAD_URL}" \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             -F "file=@${FILE_PATH}" \
-            -F "file_id=$FILE_ID" \
-            -F "channels=$CHANNEL_ID"
             -F "filename=app-${{ matrix.flavor }}-release.aab" \
-            -F "filetype=application/octet-stream")
+            -F "channels=$CHANNEL_ID")
           
           # Print the upload response to inspect the result
           echo "Upload Response: ${UPLOAD_RESPONSE}"
