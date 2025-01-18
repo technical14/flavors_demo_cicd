@@ -170,7 +170,7 @@ jobs:
         with:
           target: build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab
           credentials: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
-          parent_folder_id: fir-demo-12ed5
+          parent_folder_id: 1ujyuXg8SQovXfwHTy8Hmumgxtl8vq2Wj
 
       # Step 12: Upload AAB to Slack
 #      - name: Set up Google Drive credentials
