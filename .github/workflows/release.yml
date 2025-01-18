@@ -164,6 +164,10 @@ jobs:
             echo "Skipping build for flavor $FLAVOR because is_upload is false."
           fi          
 
+      # Step 2: Create an empty text file
+      - name: Create an empty text file
+        run: echo "This is an empty text file" > emptyfile.txt
+
       # Step 12: Upload AAB to Slack
       - name: Get Upload URL from Slack
         env:
@@ -185,8 +189,8 @@ jobs:
           
           UPLOAD_URL_RESPONSE=$(curl -X POST https://slack.com/api/files.getUploadURLExternal \
             -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -d "filename=app-${{ matrix.flavor }}-release.aab" \
-            -d "filetype=application/x-android-app-bundle" \
+            -d "filename=emptyfile.txt" \
+            -d "filetype=text/plain" \
             -d "channels=$CHANNEL_ID" \
             -d "initial_comment=Here is the latest Android App Bundle (.aab) file!" \
             -d "length=${FILE_SIZE}")
@@ -206,21 +210,12 @@ jobs:
           
           # Step 6: Perform the file upload to Slack using curl
           UPLOAD_RESPONSE=$(curl -X POST "${UPLOAD_URL}" \
-            -F "file=@${FILE_PATH}" \
-            -F "filename=app-${{ matrix.flavor }}-release.aab" \
-            -F "filetype=application/x-android-app-bundle")
+            -F "file=@emptyfile.txt" \
+            -F "filename=emptyfile.txt" \
+            -F "filetype=text/plain")
           
           # Print the upload response to inspect the result
           echo "Upload Response: ${UPLOAD_RESPONSE}"
-          
-          FILE_INFO_RESPONSE=$(curl -X POST "https://slack.com/api/files.info" \
-            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -d "file=$FILE_ID")
-          
-          echo "File Info Response: ${FILE_INFO_RESPONSE}"
-          
-          DOWNLOAD_URL = $(curl -X GET "$FILE_URL" -H "Authorization: Bearer $SLACK_BOT_TOKEN" -o "downloaded-$(basename ${FILE_PATH})")
-          echo "File DOWNLOAD_URL Response: ${DOWNLOAD_URL}"
           
           FILE_ID=$(echo "$UPLOAD_URL_RESPONSE" | jq -r '.file_id')
           
