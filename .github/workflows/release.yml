@@ -165,23 +165,6 @@ jobs:
           fi          
 
       # Step 12: Upload AAB to Slack
-      - name: Send AAB to Slack
-          if: success()
-          env:
-            SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}  # Slack webhook URL
-          run: |
-            AAB_FILE_PATH="build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
-            curl -F file=@$AAB_FILE_PATH \
-              -F "initial_comment=New release for flavor ${{ matrix.flavor }}" \
-              -F channels="#your-channel" \
-              -F "token=${{ secrets.SLACK_API_TOKEN }}" \
-              https://slack.com/api/files.upload
-            
-            echo "Successfully sent the AAB to Slack"
-
-
-    
-      # Step 12: Upload AAB to Slack
       - name: Get Upload URL from Slack
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
