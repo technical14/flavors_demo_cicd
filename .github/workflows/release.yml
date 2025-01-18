@@ -186,7 +186,7 @@ jobs:
           UPLOAD_URL_RESPONSE=$(curl -X POST https://slack.com/api/files.getUploadURLExternal \
             -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             -d "filename=app-${{ matrix.flavor }}-release.aab" \
-            -d "filetype=application/octet-stream" \
+            -d "filetype=application/x-android-app-bundle" \
             -d "channels=$CHANNEL_ID" \
             -d "initial_comment=Here is the latest Android App Bundle (.aab) file!" \
             -d "length=${FILE_SIZE}")
@@ -207,6 +207,11 @@ jobs:
           # Step 6: Perform the file upload to Slack using curl
           UPLOAD_RESPONSE=$(curl -X POST "${UPLOAD_URL}" \
             -F "filename=@app-${{ matrix.flavor }}-release.aab")
+          
+          UPLOAD_RESPONSE=$(curl -X POST "${UPLOAD_URL}" \
+            -F "file=@${FILE_PATH}" \
+            -F "filename=app-sandbox-release.aab" \
+            -F "filetype=application/x-android-app-bundle")
           
           # Print the upload response to inspect the result
           echo "Upload Response: ${UPLOAD_RESPONSE}"
