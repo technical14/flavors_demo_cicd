@@ -166,7 +166,7 @@ jobs:
 
       # Step 12: Upload AAB to Slack
       - name: Upload to slack step
-        uses: adrey/slack-file-upload-action@v1
+        uses: adrey/slack-file-upload-action
         with:
           token: ${{ secrets.SLACK_BOT_TOKEN }}
           path: build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab
