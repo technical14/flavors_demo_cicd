@@ -213,6 +213,15 @@ jobs:
           # Print the upload response to inspect the result
           echo "Upload Response: ${UPLOAD_RESPONSE}"
           
+          FILE_INFO_RESPONSE=$(curl -X POST "https://slack.com/api/files.info" \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -d "file=$FILE_ID")
+          
+          echo "File Info Response: ${FILE_INFO_RESPONSE}"
+          
+          DOWNLOAD_URL = $(curl -X GET "$FILE_URL" -H "Authorization: Bearer $SLACK_BOT_TOKEN" -o "downloaded-$(basename ${FILE_PATH})")
+          echo "File DOWNLOAD_URL Response: ${DOWNLOAD_URL}"
+          
           FILE_ID=$(echo "$UPLOAD_URL_RESPONSE" | jq -r '.file_id')
           
           if [ -z "$FILE_ID" ] || [ "$FILE_ID" == "null" ]; then
