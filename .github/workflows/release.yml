@@ -165,131 +165,20 @@ jobs:
           fi          
 
       # Step 12: Upload AAB to Slack
-      - name: Get Upload URL from Slack
+      - name: Send AAB to Slack
+        if: success()
         env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          USER_OAUTH_TOKEN: ${{ secrets.USER_OAUTH_TOKEN }}
-          CHANNEL_ID: C089T0M0FEC  # The channel ID or name to upload the file to
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}  # Slack webhook URL
         run: |
-          FILE_PATH="build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"  # Adjust the file path as needed
-          
-          # Check if the .aab file exists
-          if [ ! -f "${FILE_PATH}" ]; then
-            echo "Error: .aab file not found at ${FILE_PATH}"
-            exit 1
-          fi
-  
-          # Get the file size in bytes
-          FILE_SIZE=$(stat -c %s "${FILE_PATH}")
-          echo "File size: ${FILE_SIZE} bytes"
-          
-          UPLOAD_URL_RESPONSE=$(curl -X POST https://slack.com/api/files.getUploadURLExternal \
-            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -d "filename=app-${{ matrix.flavor }}-release.aab" \
-            -d "filetype=application/octet-stream" \
-            -d "channels=$CHANNEL_ID" \
-            -d "initial_comment=Here is the latest Android App Bundle (.aab) file!" \
-            -d "length=${FILE_SIZE}")
-          
-          # Print the full response to understand what's being returned
-          echo "Upload URL Response: ${UPLOAD_URL_RESPONSE}"
-          
-          # Step 4: Extract the upload_url from the response
-          UPLOAD_URL=$(echo $UPLOAD_URL_RESPONSE | jq -r '.upload_url')
-          
-          if [ -z "${UPLOAD_URL}" ] || [ "${UPLOAD_URL}" == "null" ]; then
-            echo "Error: Upload URL is not set properly."
-            exit 1
-          fi
-          
-          echo "Successfully retrieved upload URL: ${UPLOAD_URL}"
-                    
-          # Step 6: Perform the file upload to Slack using curl
-          UPLOAD_RESPONSE=$(curl -X POST "${UPLOAD_URL}" \
-            -F "file=@${FILE_PATH}" \
-            -F "filename=app-${{ matrix.flavor }}-release.aab" \
-            -F "filetype=application/octet-stream")
-          
-          # Print the upload response to inspect the result
-          echo "Upload Response: ${UPLOAD_RESPONSE}"
-          
-          FILE_ID=$(echo "$UPLOAD_URL_RESPONSE" | jq -r '.file_id')
-          
-          if [ -z "$FILE_ID" ] || [ "$FILE_ID" == "null" ]; then
-            echo "Error: Could not retrieve file_id."
-            exit 1
-          fi
-          
-          PUBLIC_URL_RESPONSE=$(curl -X POST https://slack.com/api/files.sharedPublicURL \
-            -H "Authorization: Bearer $USER_OAUTH_TOKEN" \
-            --data "file=$FILE_ID")
-          
-          echo "Shared Public Response: ${PUBLIC_URL_RESPONSE}"
-          PUBLIC_FILE_URL=$(echo "$PUBLIC_URL_RESPONSE" | jq -r '.file.permalink_public')
-          PUBLIC_FILE_URL_DOWNLOAD=$(echo "$PUBLIC_URL_RESPONSE" | jq -r '.file.url_private_download')
-          
-          echo "Public URL for the PUBLIC_FILE_URL: $PUBLIC_FILE_URL"
-          echo "Public URL for the PUBLIC_FILE_URL_DOWNLOAD: $PUBLIC_FILE_URL_DOWNLOAD"
-          
-          if [ -z "$PUBLIC_FILE_URL" ]; then
-            echo "Error: Could not retrieve the public URL for the file."
-            exit 1
-          fi
-          
-          # Step 4: Complete the file upload via Slack API
-          COMPLETE_UPLOAD_RESPONSE=$(curl -X POST https://slack.com/api/files.completeUploadExternal \
-          -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-          -H "Content-Type: application/json" \
-          --data "$(printf '{
-            "files": [
-              {
-                "id": "%s",
-                "title": "app-%s-release.aab"
-              }
-            ]
-          }' "$FILE_ID" "${{ matrix.flavor }}")")
-          
-          echo "Complete Upload Response: ${COMPLETE_UPLOAD_RESPONSE}"
-          
-          if echo "$COMPLETE_UPLOAD_RESPONSE" | grep -q '"ok":true'; then
-            echo "File upload completed successfully!"
-          else
-            echo "Error: File upload completion failed."
-            exit 1
-          fi
-          
-          FILE_URL=$(echo "$COMPLETE_UPLOAD_RESPONSE" | jq -r '.files[0].url_private')
-          echo "File Url Private: ${FILE_URL}"
-          
-          if [ -z "$FILE_URL" ] || [ "$FILE_URL" == "null" ]; then
-            echo "Error: Could not retrieve file URL."
-            exit 1
-          fi
-          
-          NOTIFY_RESPONSE=$(curl -X POST https://slack.com/api/chat.postMessage \
-          -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-          -H "Content-Type: application/json" \
-          --data "$(printf '{
-            "channel": "%s", 
-            "text": "Upload aab file",
-            "blocks": [
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "File *%s* has been successfully uploaded to Slack."
-                }
-              }
-            ]
-          }' "$CHANNEL_ID" "$PUBLIC_FILE_URL")")
-          
-          echo "Notification Response: ${NOTIFY_RESPONSE}"
-          
-          # Step 7: Optionally, check if the upload was successful
-          if echo "$NOTIFY_RESPONSE" | grep -q '"ok":true'; then
-            echo "Slack upload successful!"
-          else
-            echo "Slack upload failed. See response for details."
-            exit 1
-          fi
+          AAB_FILE_PATH="build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
+          curl -F file=@$AAB_FILE_PATH \
+            -F "initial_comment=New release for flavor ${{ matrix.flavor }}" \
+            -F channels="C089T0M0FEC" \
+            -F "token=${{ secrets.SLACK_BOT_TOKEN }}" \
+            https://slack.com/api/files.upload
+            
+          echo "Successfully sent the AAB to Slack"
 
+
+    
+      
