@@ -171,11 +171,38 @@ jobs:
           project_id: fir-demo-12ed5  # Replace with your Google Cloud project ID
           credentials_json: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}  # The secret containing the Google OAuth credentials
 
+      # Step 3: Create a folder in Google Drive
+      - name: Create folder in Google Drive
+        id: create_folder
+        run: |
+          FOLDER_NAME="AAB Upload Folder-${{ github.sha }}"
+          # Create the folder via Google Drive API
+          FOLDER_ID=$(curl -X POST \
+            -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "name": "'"$FOLDER_NAME"'",
+              "mimeType": "application/vnd.google-apps.folder"
+            }' \
+            https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart \
+            | jq -r '.id')
+          
+          echo "Created folder with ID: $FOLDER_ID"
+          echo "::set-output name=folder_id::$FOLDER_ID"  # Store folder_id for later use
+
+      # Step 4: Upload the AAB file to Google Drive
       - name: Upload AAB file to Google Drive
-        uses: google-drive-upload-action@v1
-        with:
-          file_path: build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab  # Replace with the correct path to your .aab file
-          file_name: app-${{ matrix.flavor }}-release.aab  # The name the file will have on Google Drive
+        run: |
+          FILE_PATH="build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
+          FILE_NAME="app-${{ matrix.flavor }}-release.aab"
+          
+          # Upload file to Google Drive using the folder_id created earlier
+          curl -X POST \
+            -L \
+            -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
+            -F "metadata={name :'${FILE_NAME}', parents: ['${{ steps.create_folder.outputs.folder_id }}']};type=application/json;charset=UTF-8" \
+            -F "file=@${FILE_PATH};type=application/octet-stream" \
+            https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart
 
 
       # Step 12: Upload AAB to Slack
