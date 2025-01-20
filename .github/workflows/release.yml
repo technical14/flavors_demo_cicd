@@ -205,7 +205,7 @@ jobs:
       - name: Upload .aab file to Google Drive
         uses: willo32/google-drive-upload-action@v1
         with:
-          target: ${{ steps.extract-flavor.outputs.FLAVOR_PATH }}  # Path to your .aab file
+          target: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"  # Path to your .aab file
           credentials: service_account.json  # Path to the service account credentials
           parent_folder_id: 1ujyuXg8SQovXfwHTy8Hmumgxtl8vq2Wj  # Replace with your Google Drive folder ID
 
