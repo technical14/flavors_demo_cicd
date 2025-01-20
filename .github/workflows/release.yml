@@ -192,25 +192,11 @@ jobs:
           # Set the extracted package name as an output for use in later steps
           echo "::set-output name=PACKAGE_NAME::$PACKAGE_NAME"  # Correct way to set output
 
-      # Step 3: Write Service Account JSON from Secrets to a Temporary File
-      - name: Write Service Account JSON to file
-        run: |
-          echo "${{ secrets.GCP_CREDENTIAL }}" > /tmp/gcp-key.json  # Save the secret to a file
-          cat /tmp/gcp-key.json
-
       # Step 3: Authenticate using the service account JSON
-      - name: Authenticate Google Cloud SDK
-        run: |
-          # Verify if the file exists and is not empty
-          if [ -f /tmp/gcp-key.json ]; then
-            echo "Service account key file exists!"
-          else
-            echo "Service account key file does not exist!"
-            exit 1
-          fi
-
-          gcloud auth activate-service-account --key-file=service_account.json  # Use the temporary file for authentication
-          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+#      - name: Authenticate Google Cloud SDK
+#        run: |
+#          gcloud auth activate-service-account --key-file=service_account.json  # Use the temporary file for authentication
+#          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
 
       # Step 12: Upload the file to Google Drive
       - name: Upload AAB File to Google Drive
