@@ -164,48 +164,15 @@ jobs:
             echo "Skipping build for flavor $FLAVOR because is_upload is false."
           fi
 
-      # Step 2: Install dependencies (jq, curl)
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y jq curl unzip
-
-      # Step 3: Decode service account JSON from GitHub Secret
-      - name: Decode service account JSON from GitHub Secret
-        run: |
-          # Decode the base64-encoded service account JSON stored in GitHub Secrets
-          echo "${{ secrets.GOOGLE_CREDENTIALS_JSON }}" | base64 --decode > service_account.json
-
-      # Step 4: Check if service account JSON is valid (optional)
-      - name: Validate service account JSON
-        run: |
-          cat service_account.json  # Print the contents for debugging
-          jq . service_account.json  # Validate JSON format
-
-      # Step 5: Extract flavor and prepare for the upload
-      - name: Extract flavor and prepare the file for upload
-        id: extract-flavor
-        run: |
-          # Extract the .aab file path using jq from flavors.json (adjust if necessary)
-          FLAVOR_PATH="build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
-          echo "File to upload: $FLAVOR_PATH"
-          
-          # Check if the file exists
-          if [ ! -f "$FLAVOR_PATH" ]; then
-            echo "The .aab file does not exist at $FLAVOR_PATH"
-            exit 1
-          fi
-          
-          # Optional: Set the project ID for debugging purposes
-          PROJECT_ID=$(jq -r '.project_id' service_account.json)
-          echo "Project ID: $PROJECT_ID"
-          echo "PROJECT_ID=$PROJECT_ID" >> $GITHUB_ENV
-
-      # Step 6: Upload the .aab file to Google Drive
-      - name: Upload .aab file to Google Drive
-        uses: willo32/google-drive-upload-action@v1
+      # Step 2: Upload AAB Drive
+      - name: Upload apk to Google Drive
+        uses: logickoder/google-drive-upload@test
         with:
-          target: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"  # Path to your .aab file
-          credentials: service_account.json  # Path to the service account credentials
-          parent_folder_id: 1ujyuXg8SQovXfwHTy8Hmumgxtl8vq2Wj  # Replace with your Google Drive folder ID
+          credentials: ${{ secrets.GCP_CREDENTIAL }}
+          filename: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
+          folderID: ${{ secrets.DRIVE_FOLDER_ID }}
+          overwrite: "true"
+
+
+
 
