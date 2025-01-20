@@ -165,52 +165,77 @@ jobs:
           fi
 
       # Step 1: Install dependencies (jq, curl, Google Cloud SDK)
+      - name: Upload to gdrive
+        uses: adityak74/google-drive-upload-git-action@main
+        with:
+          credentials: ${{ secrets.GCP_CREDENTIAL }}
+          filename: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
+          folderId: ${{ secrets.DRIVE_FOLDER_ID }}
+          name: "app-${{ matrix.flavor }}-release.aab" # optional string
+          overwrite: "true" # optional boolean
+
+      - name: Make Directory Structure
+        run: |
+          mkdir -p w/x/y
+          date +%s > w/x/y/z
+
+      - name: Mirror Directory Structure
+        uses: adityak74/google-drive-upload-git-action@main
+        with:
+          credentials: ${{ secrets.GCP_CREDENTIAL }}
+          filename: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
+          folderId: ${{ secrets.DRIVE_FOLDER_ID }}
+          overwrite: "true"
+          mirrorDirectoryStructure: "true"
+          customDirectoryStructure: "${{ matrix.flavor }}/"
+
+      # Step 1: Install dependencies (jq, curl, Google Cloud SDK)
 #      - name: Install dependencies
 #        run: |
 #          sudo apt-get update
 #          sudo apt-get install -y jq curl unzip
 
       # Step 10: Extract service_account from flavors.json use When direct (Upload in google playstore)
-      - name: Set up Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
+#      - name: Set up Google Cloud SDK
+#        uses: google-github-actions/setup-gcloud@v2
+#        with:
+#          project_id: ${{ secrets.GCP_PROJECT_ID }}
 
       # Step 10: Extract service_account from flavors.json use When direct (Upload in google playstore)
-      - name: Extracting service_account from flavors.json
-        id: extract-application-id
-        run: |
-          service_account=$(jq -r '.flavors["${{ matrix.flavor }}"].service_account' flavors.json)
-          echo "$service_account" > service_account.json
-          cat service_account.json
-
-          PACKAGE_NAME=$(jq -r --arg flavor "${{ matrix.flavor }}" '.flavors[] | select(.name == $flavor) | .application_id' flavors.json)
-
-          # Output the package name for debugging purposes
-          echo "Package name for $FLAVOR flavor: $PACKAGE_NAME"
-
-          # Set the extracted package name as an output for use in later steps
-          echo "::set-output name=PACKAGE_NAME::$PACKAGE_NAME"  # Correct way to set output
-
-      # Step 3: Authenticate using the service account JSON
-      - name: Authenticate Google Cloud SDK
-        run: |
-          gcloud auth activate-service-account --key-file=./service_account.json  # Use the temporary file for authentication
-          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
-
-      # Step 12: Upload the file to Google Drive
-      - name: Upload AAB File to Google Drive
-        run: |
-          FILE_PATH="build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
-          FILE_NAME="app-${{ matrix.flavor }}-release.aab"
-          FOLDER_ID="${{ secrets.DRIVE_FOLDER_ID }}"  # Retrieve folder ID from the secret
-          
-          echo "Uploading file ${FILE_PATH} to Google Drive..."
-          
-          # Upload file to Google Drive using curl
-          curl -X POST \
-            -L \
-            -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
-            -F "metadata={name :'${FILE_NAME}', parents: ['${FOLDER_ID}']};type=application/json" \
-            -F "file=@${FILE_PATH};type=application/octet-stream" \
-            "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart"
+#      - name: Extracting service_account from flavors.json
+#        id: extract-application-id
+#        run: |
+#          service_account=$(jq -r '.flavors["${{ matrix.flavor }}"].service_account' flavors.json)
+#          echo "$service_account" > service_account.json
+#          cat service_account.json
+#
+#          PACKAGE_NAME=$(jq -r --arg flavor "${{ matrix.flavor }}" '.flavors[] | select(.name == $flavor) | .application_id' flavors.json)
+#
+#          # Output the package name for debugging purposes
+#          echo "Package name for $FLAVOR flavor: $PACKAGE_NAME"
+#
+#          # Set the extracted package name as an output for use in later steps
+#          echo "::set-output name=PACKAGE_NAME::$PACKAGE_NAME"  # Correct way to set output
+#
+#      # Step 3: Authenticate using the service account JSON
+#      - name: Authenticate Google Cloud SDK
+#        run: |
+#          gcloud auth activate-service-account --key-file=./service_account.json  # Use the temporary file for authentication
+#          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+#
+#      # Step 12: Upload the file to Google Drive
+#      - name: Upload AAB File to Google Drive
+#        run: |
+#          FILE_PATH="build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
+#          FILE_NAME="app-${{ matrix.flavor }}-release.aab"
+#          FOLDER_ID="${{ secrets.DRIVE_FOLDER_ID }}"  # Retrieve folder ID from the secret
+#
+#          echo "Uploading file ${FILE_PATH} to Google Drive..."
+#
+#          # Upload file to Google Drive using curl
+#          curl -X POST \
+#            -L \
+#            -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
+#            -F "metadata={name :'${FILE_NAME}', parents: ['${FOLDER_ID}']};type=application/json" \
+#            -F "file=@${FILE_PATH};type=application/octet-stream" \
+#            "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart"
