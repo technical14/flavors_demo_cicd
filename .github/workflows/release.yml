@@ -166,7 +166,7 @@ jobs:
 
       # Step 2: Upload AAB Drive
       - name: Upload apk to Google Drive
-        uses: logickoder/google-drive-upload@test
+        uses: logickoder/google-drive-upload@v1.0.0
         with:
           credentials: ${{ secrets.GCP_CREDENTIAL }}
           filename: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
