@@ -169,8 +169,8 @@ jobs:
         uses: wagaari/google-drive-upload-action@v1
         with:
           credentials: ${{ secrets.GCP_CREDENTIAL }}
-          filename: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
-          folderID: ${{ secrets.DRIVE_FOLDER_ID }}
+          target: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
+          parent_folder_id: ${{ secrets.DRIVE_FOLDER_ID }}
           overwrite: "true"
 
 
