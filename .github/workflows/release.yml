@@ -180,7 +180,14 @@ jobs:
           # Set the extracted package name as an output for use in later steps
           echo "::set-output name=PACKAGE_NAME::$PACKAGE_NAME"  # Correct way to set output
 
-      # Step 12: Install Google Cloud SDK
+      # Step 4: Install Google Cloud SDK (if required for the next steps)
+      - name: Install Google Cloud SDK
+        run: |
+          curl https://sdk.cloud.google.com | bash
+          source ~/.bashrc
+          gcloud --version
+
+      # Step 12: Upload the file to Google Drive
       - name: Upload a file to Google Drive
         uses: willo32/google-drive-upload-action@v1
         with:
