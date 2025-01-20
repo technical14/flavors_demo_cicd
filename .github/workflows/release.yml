@@ -166,7 +166,7 @@ jobs:
 
       # Upload AAB to Slack
       - name: Upload AAB to Slack
-        uses: slackapi/slack-action@v1
+        uses: rtCamp/slack-upload@v1
         with:
           token: ${{ secrets.SLACK_BOT_TOKEN }}
           file: ${{ github.workspace }}/build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab
