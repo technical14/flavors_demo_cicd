@@ -14,7 +14,6 @@
       "keystore_path": "keystore/sandbox.jks",
       "is_upload": true,
       "is_ios_upload": true,
-      "platforms": ["ios,android"],
       "service_account": {
         "type": "service_account",
         "project_id": "sandbox-dd4f9",
@@ -43,7 +42,7 @@
       "keystore_path": "keystore/production.jks",
       "is_upload": false,
       "is_ios_upload": false,
-      "platforms": ["android"]
+      "service_account": {}
     },
     "development":{
       "name": "development",
@@ -59,7 +58,7 @@
       "keystore_path": "keystore/development.jks",
       "is_upload": false,
       "is_ios_upload": false,
-      "platforms": []
+      "service_account": {}
     },
     "staging":{
       "name": "staging",
@@ -75,7 +74,7 @@
       "keystore_path": "keystore/staging.jks",
       "is_upload": false,
       "is_ios_upload": false,
-      "platforms": []
+      "service_account": {}
     },
     "environment":{
       "name": "environment",
@@ -91,7 +90,7 @@
       "keystore_path": "keystore/environment.jks",
       "is_upload": false,
       "is_ios_upload": false,
-      "platforms": []
+      "service_account": {}
     }
   }
 }
