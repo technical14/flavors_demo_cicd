@@ -164,41 +164,39 @@ jobs:
             echo "Skipping build for flavor $FLAVOR because is_upload is false."
           fi
 
-      # Step 2: Decode the base64-encoded service account credentials
-      - name: Decode Service Account Credentials
-        run: |
-          echo "${{ secrets.GCP_CREDENTIAL }}" | base64 --decode > service_account.json
-        shell: bash
-
-      # Step 3: Authenticate using the decoded service account credentials
-      - name: Authenticate Google Cloud SDK
-        run: |
-          gcloud auth activate-service-account --key-file=service_account.json
-          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+      # Upload AAB to Slack
+      - name: Upload AAB to Slack
+        uses: slackapi/slack-action@v1
+        with:
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          file: ${{ github.workspace }}/build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab
+          channels: 'C089T0M0FEC'
+          title: 'New App Bundle (AAB)'
+          filename: 'app-${{ matrix.flavor }}-release.aab'
 
       # Step 1: Install dependencies (jq, curl, Google Cloud SDK)
-      - name: Upload to gdrive
-        uses: adityak74/google-drive-upload-git-action@main
-        with:
-          credentials: ${{ secrets.GCP_CREDENTIAL }}
-          filename: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
-          folderId: ${{ secrets.DRIVE_FOLDER_ID }}
-          name: "app-${{ matrix.flavor }}-release.aab" # optional string
-          overwrite: "true" # optional boolean
-
-      - name: Make Directory Structure
-        run: |
-          mkdir -p w/x/y
-          date +%s > w/x/y/z
-
-      - name: Mirror Directory Structure
-        uses: adityak74/google-drive-upload-git-action@main
-        with:
-          credentials: ${{ secrets.GCP_CREDENTIAL }}
-          filename: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
-          folderId: ${{ secrets.DRIVE_FOLDER_ID }}
-          overwrite: "true"
-          mirrorDirectoryStructure: "true"
+#      - name: Upload to gdrive
+#        uses: adityak74/google-drive-upload-git-action@main
+#        with:
+#          credentials: ${{ secrets.GCP_CREDENTIAL }}
+#          filename: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
+#          folderId: ${{ secrets.DRIVE_FOLDER_ID }}
+#          name: "app-${{ matrix.flavor }}-release.aab" # optional string
+#          overwrite: "true" # optional boolean
+#
+#      - name: Make Directory Structure
+#        run: |
+#          mkdir -p w/x/y
+#          date +%s > w/x/y/z
+#
+#      - name: Mirror Directory Structure
+#        uses: adityak74/google-drive-upload-git-action@main
+#        with:
+#          credentials: ${{ secrets.GCP_CREDENTIAL }}
+#          filename: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
+#          folderId: ${{ secrets.DRIVE_FOLDER_ID }}
+#          overwrite: "true"
+#          mirrorDirectoryStructure: "true"
 
       # Step 1: Install dependencies (jq, curl, Google Cloud SDK)
 #      - name: Install dependencies
