@@ -172,11 +172,19 @@ jobs:
           source ~/.bashrc
           gcloud --version
 
-      # Step 3: Authenticate with Google Cloud using service account
-      - name: Authenticate Google Cloud SDK
+      # Step 3: Authenticate with Google Cloud using service account credentials
+      - name: Authenticate with Google Cloud
         run: |
+          # Write the service account credentials from GitHub Secrets to a file
           echo "${{ secrets.GCP_CREDENTIAL }}" > /tmp/service_account.json
+          
+          # Check the contents of the service account JSON file for debugging
+          cat /tmp/service_account.json
+          
+          # Authenticate using the service account JSON file
           gcloud auth activate-service-account --key-file=/tmp/service_account.json
+          
+          # Set the project ID from GitHub Secrets
           gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
 
       # Step 4: Upload .aab file to Google Drive using Google Drive API (Custom Script)
