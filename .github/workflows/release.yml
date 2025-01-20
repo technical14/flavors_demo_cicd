@@ -180,10 +180,19 @@ jobs:
       - name: Write Service Account JSON to file
         run: |
           echo "${{ secrets.GCP_CREDENTIAL }}" > /tmp/gcp-key.json  # Save the secret to a file
+          cat /tmp/gcp-key.json
 
       # Step 3: Authenticate using the service account JSON
       - name: Authenticate Google Cloud SDK
         run: |
+          # Verify if the file exists and is not empty
+          if [ -f /tmp/gcp-key.json ]; then
+            echo "Service account key file exists!"
+          else
+            echo "Service account key file does not exist!"
+            exit 1
+          fi
+
           gcloud auth activate-service-account --key-file=/tmp/gcp-key.json  # Use the temporary file for authentication
           gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
 
