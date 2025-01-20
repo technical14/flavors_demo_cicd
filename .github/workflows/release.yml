@@ -164,28 +164,41 @@ jobs:
             echo "Skipping build for flavor $FLAVOR because is_upload is false."
           fi
 
+      # Step 1: Install dependencies (jq, curl, Google Cloud SDK)
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq curl unzip
+
       # Step 10: Extract service_account from flavors.json use When direct (Upload in google playstore)
       - name: Extracting service_account from flavors.json
-        id: extract-application-id
+        id: extract-service-account
         run: |
           service_account=$(jq -r '.flavors["${{ matrix.flavor }}"].service_account' flavors.json)
           echo "$service_account" > service_account.json
           cat service_account.json
+          
+          # Extract the project ID from the service account JSON (project_id is typically inside the service account JSON)
+          GCP_PROJECT_ID=$(echo "$service_account" | jq -r '.project_id')
+          
+          # Print the GCP_PROJECT_ID to the GitHub Actions logs
+          echo "GCP Project ID: $GCP_PROJECT_ID"
 
-          PACKAGE_NAME=$(jq -r --arg flavor "${{ matrix.flavor }}" '.flavors[] | select(.name == $flavor) | .application_id' flavors.json)
+          # Set the project ID as an output for later use in the workflow
+          echo "GCP_PROJECT_ID=$GCP_PROJECT_ID" >> $GITHUB_ENV
 
-          # Output the package name for debugging purposes
-          echo "Package name for $FLAVOR flavor: $PACKAGE_NAME"
-
-          # Set the extracted package name as an output for use in later steps
-          echo "::set-output name=PACKAGE_NAME::$PACKAGE_NAME"  # Correct way to set output
+      # Step 3: Authenticate using the service account JSON
+      - name: Authenticate Google Cloud SDK
+        run: |
+          gcloud auth activate-service-account --key-file=service_account.json
+          gcloud config set project ${{ env.GCP_PROJECT_ID }}
 
       # Step 4: Install Google Cloud SDK (if required for the next steps)
-      - name: Install Google Cloud SDK
-        run: |
-          curl https://sdk.cloud.google.com | bash
-          source ~/.bashrc
-          gcloud --version
+#      - name: Install Google Cloud SDK
+#        run: |
+#          curl https://sdk.cloud.google.com | bash
+#          source ~/.bashrc
+#          gcloud --version
 
       # Step 12: Upload the file to Google Drive
       - name: Upload a file to Google Drive
