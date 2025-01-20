@@ -193,7 +193,7 @@ jobs:
             exit 1
           fi
 
-          gcloud auth activate-service-account --key-file=/tmp/gcp-key.json  # Use the temporary file for authentication
+          gcloud auth activate-service-account --key-file="/tmp/gcp-key.json"  # Use the temporary file for authentication
           gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
 
       # Step 12: Upload the file to Google Drive
