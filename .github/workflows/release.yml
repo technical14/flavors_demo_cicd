@@ -164,6 +164,18 @@ jobs:
             echo "Skipping build for flavor $FLAVOR because is_upload is false."
           fi
 
+      # Step 2: Decode the base64-encoded service account credentials
+      - name: Decode Service Account Credentials
+        run: |
+          echo "${{ secrets.GCP_CREDENTIAL }}" | base64 --decode > service_account.json
+        shell: bash
+
+      # Step 3: Authenticate using the decoded service account credentials
+      - name: Authenticate Google Cloud SDK
+        run: |
+          gcloud auth activate-service-account --key-file=service_account.json
+          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+
       # Step 1: Install dependencies (jq, curl, Google Cloud SDK)
       - name: Upload to gdrive
         uses: adityak74/google-drive-upload-git-action@main
