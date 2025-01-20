@@ -166,7 +166,7 @@ jobs:
 
       # Step 2: Upload AAB Drive
       - name: Upload apk to Google Drive
-        uses: technical14/flavors_demo_cicd@main
+        uses: wagaari/google-drive-upload-action@v1
         with:
           credentials: ${{ secrets.GCP_CREDENTIAL }}
           filename: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
