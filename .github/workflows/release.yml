@@ -165,13 +165,34 @@ jobs:
           fi
 
       # Step 2: Upload AAB Drive
-      - name: Upload apk to Google Drive
-        uses: wagaari/google-drive-upload-action@v1
-        with:
-          credentials: ${{ secrets.GCP_CREDENTIAL }}
-          target: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
-          parent_folder_id: ${{ secrets.DRIVE_FOLDER_ID }}
-          overwrite: "true"
+      # Step 2: Install Google Cloud SDK
+      - name: Install Google Cloud SDK
+        run: |
+          curl https://sdk.cloud.google.com | bash
+          source ~/.bashrc
+          gcloud --version
+
+      # Step 3: Authenticate with Google Cloud using service account
+      - name: Authenticate Google Cloud SDK
+        run: |
+          echo "${{ secrets.GCP_CREDENTIAL }}" > /tmp/service_account.json
+          gcloud auth activate-service-account --key-file=/tmp/service_account.json
+          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+
+      # Step 4: Upload .aab file to Google Drive using Google Drive API (Custom Script)
+      - name: Upload .aab file to Google Drive
+        run: |
+          FILE_PATH="build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
+          PARENT_FOLDER_ID="${{ secrets.DRIVE_FOLDER_ID }}"
+
+          # Use Google Drive API to upload the file
+          curl -X POST -L \
+            -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
+            -F "metadata={name :'$(basename $FILE_PATH)', parents: ['${PARENT_FOLDER_ID}']};type=application/json" \
+            -F "file=@$FILE_PATH;type=application/octet-stream" \
+            "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart"
+
+          echo "File uploaded successfully to Google Drive!"
 
 
 
