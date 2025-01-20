@@ -164,30 +164,43 @@ jobs:
             echo "Skipping build for flavor $FLAVOR because is_upload is false."
           fi
 
-      # Step 2: Upload AAB Drive
-      # Step 2: Install Google Cloud SDK
-      - name: Install Google Cloud SDK
+      # Step 1: Install dependencies (jq, curl, Google Cloud SDK)
+      - name: Install dependencies
         run: |
-          curl https://sdk.cloud.google.com | bash
-          source ~/.bashrc
-          gcloud --version
+          sudo apt-get update
+          sudo apt-get install -y jq curl unzip
 
-      # Step 3: Authenticate with Google Cloud using service account credentials
-      - name: Authenticate with Google Cloud
+      # Step 10: Extract service_account from flavors.json use When direct (Upload in google playstore)
+      - name: Extracting service_account from flavors.json
+        id: extract-service-account
         run: |
-          # Write the service account credentials from GitHub Secrets to a file
-          echo "${{ secrets.GCP_CREDENTIAL }}" > /tmp/service_account.json
+          service_account=$(jq -r '.flavors["${{ matrix.flavor }}"].service_account' flavors.json)
+          echo "$service_account" > service_account.json
+          cat service_account.json
           
-          # Check the contents of the service account JSON file for debugging
-          cat /tmp/service_account.json
+          # Extract the project ID from the service account JSON (project_id is typically inside the service account JSON)
+          GCP_PROJECT_ID=$(echo "$service_account" | jq -r '.project_id')
           
-          # Authenticate using the service account JSON file
-          gcloud auth activate-service-account --key-file=/tmp/service_account.json
-          
-          # Set the project ID from GitHub Secrets
-          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+          # Print the GCP_PROJECT_ID to the GitHub Actions logs
+          echo "GCP Project ID: $GCP_PROJECT_ID"
 
-      # Step 4: Upload .aab file to Google Drive using Google Drive API (Custom Script)
+          # Set the project ID as an output for later use in the workflow
+          echo "GCP_PROJECT_ID=$GCP_PROJECT_ID" >> $GITHUB_ENV
+
+      # Step 3: Authenticate using the service account JSON
+      - name: Authenticate Google Cloud SDK
+        run: |
+          gcloud auth activate-service-account --key-file=service_account.json --verbosity debug
+          gcloud config set project ${{ env.GCP_PROJECT_ID }}
+
+      # Step 4: Install Google Cloud SDK (if required for the next steps)
+#      - name: Install Google Cloud SDK
+#        run: |
+#          curl https://sdk.cloud.google.com | bash
+#          source ~/.bashrc
+#          gcloud --version
+
+      # Step 12: Upload the file to Google Drive
       - name: Upload .aab file to Google Drive
         run: |
           FILE_PATH="build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
@@ -201,7 +214,3 @@ jobs:
             "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart"
 
           echo "File uploaded successfully to Google Drive!"
-
-
-
-
