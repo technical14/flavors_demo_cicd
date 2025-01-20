@@ -168,11 +168,19 @@ jobs:
       - name: Upload AAB to Slack
         uses: slackapi/slack-github-action@v1.24.0
         with:
-          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          token: "xoxb-8232907570615-8321747795585-cIitvqu1ZFjrHFR7WmRiHhfq"
           file: ${{ github.workspace }}/build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab
           channels: 'C089T0M0FEC'
           title: 'New App Bundle (AAB)'
           filename: 'app-${{ matrix.flavor }}-release.aab'
+
+      # Send Slack Notification (Optional: before or after file upload)
+      - name: Send notification to Slack
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          token: "xoxb-8232907570615-8321747795585-cIitvqu1ZFjrHFR7WmRiHhfq"  # Slack Bot Token from GitHub Secrets
+          text: "A new App Bundle (AAB) has been uploaded to Slack!"  # Your message
+          channels: 'C089T0M0FEC'  # Slack channel name
 
       # Step 1: Install dependencies (jq, curl, Google Cloud SDK)
 #      - name: Upload to gdrive
