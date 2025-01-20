@@ -187,7 +187,6 @@ jobs:
           folderId: ${{ secrets.DRIVE_FOLDER_ID }}
           overwrite: "true"
           mirrorDirectoryStructure: "true"
-          customDirectoryStructure: "${{ matrix.flavor }}/"
 
       # Step 1: Install dependencies (jq, curl, Google Cloud SDK)
 #      - name: Install dependencies
