@@ -168,7 +168,7 @@ jobs:
       - name: Upload AAB to Slack
         uses: slackapi/slack-github-action@v1.24.0
         with:
-          token: "xoxb-8232907570615-8313266494726-JL75KJfiakRW1zrPM15VlGix"
+          botToken: "xoxb-8232907570615-8313266494726-JL75KJfiakRW1zrPM15VlGix"
           file: ${{ github.workspace }}/build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab
           channels: 'C089T0M0FEC'
           title: 'New App Bundle (AAB)'
@@ -178,7 +178,7 @@ jobs:
       - name: Send notification to Slack
         uses: slackapi/slack-github-action@v1.24.0
         with:
-          token: "xoxb-8232907570615-8313266494726-JL75KJfiakRW1zrPM15VlGix"  # Slack Bot Token from GitHub Secrets
+          botToken: "xoxb-8232907570615-8313266494726-JL75KJfiakRW1zrPM15VlGix"  # Slack Bot Token from GitHub Secrets
           text: "A new App Bundle (AAB) has been uploaded to Slack!"  # Your message
           channels: 'C089T0M0FEC'  # Slack channel name
 
