@@ -188,10 +188,10 @@ jobs:
           echo "GCP_PROJECT_ID=$GCP_PROJECT_ID" >> $GITHUB_ENV
 
       # Step 3: Authenticate using the service account JSON
-      - name: Authenticate Google Cloud SDK
-        run: |
-          gcloud auth activate-service-account --key-file=service_account.json
-          gcloud config set project ${{ env.GCP_PROJECT_ID }}
+#      - name: Authenticate Google Cloud SDK
+#        run: |
+#          gcloud auth activate-service-account --key-file=service_account.json --verbosity debug
+#          gcloud config set project ${{ env.GCP_PROJECT_ID }}
 
       # Step 4: Install Google Cloud SDK (if required for the next steps)
 #      - name: Install Google Cloud SDK
@@ -207,25 +207,3 @@ jobs:
           target: build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab
           credentials: service_account.json
           parent_folder_id: 1ujyuXg8SQovXfwHTy8Hmumgxtl8vq2Wj
-
-      # Step 12: Upload AAB to Slack
-#      - name: Set up Google Drive credentials
-#        uses: google-github-actions/setup-gcloud@v2
-#        with:
-#          project_id: fir-demo-12ed5  # Replace with your Google Cloud project ID
-#          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}  # The secret containing the Google OAuth credentials
-
-
-      # Step 4: Upload the AAB file to Google Drive
-#      - name: Upload AAB file to Google Drive
-#        run: |
-#          FILE_PATH="build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
-#          FILE_NAME="app-${{ matrix.flavor }}-release.aab"
-#
-#          # Upload file to Google Drive using the folder_id created earlier
-#          curl -X POST \
-#            -L \
-#            -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
-#            -F "metadata={name :'${FILE_NAME}', parents: ['${{ steps.create_folder.outputs.folder_id }}']};type=application/json;charset=UTF-8" \
-#            -F "file=@${FILE_PATH};type=application/octet-stream" \
-#            https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart
