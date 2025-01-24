@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main   # Trigger action on push to the 'main' branch
-permissions:
-  contents: read  # Read access to repository contents (default)
-
 jobs:
   parse:
     runs-on: ubuntu-latest
@@ -166,19 +163,31 @@ jobs:
             echo "Skipping build for flavor $FLAVOR because is_upload is false."
           fi
 
-      # Step 1: Debug - Print the secret value (BE CAREFUL with secrets)
-      - name: Print WEBHOOK_URL secret
-        run: echo "WEBHOOK_URL=${{ secrets.WEBHOOK_URL }}"
+      # Step 9: Extract service_account from flavors.json use When direct (Upload in google playstore)
+      - name: Extracting service_account from flavors.json
+        id: extract-application-id
+        run: |
+          service_account=$(jq -r '.flavors["${{ matrix.flavor }}"].service_account' flavors.json)
+          echo "Service Account: $service_account"
+          echo "$service_account" > service_account.json
+          cat service_account.json
+
+          PACKAGE_NAME=$(jq -r --arg flavor "${{ matrix.flavor }}" '.flavors[] | select(.name == $flavor) | .application_id' flavors.json)
+
+          # Output the package name for debugging purposes
+          echo "Package name for $FLAVOR flavor: $PACKAGE_NAME"
+
+          # Set the extracted package name as an output for use in later steps
+          echo "::set-output name=PACKAGE_NAME::$PACKAGE_NAME"  # Correct way to set output
 
       # Upload AAB to Slack
-      - name: Upload AAB to Slack
-        uses: slackapi/slack-github-action@v1.24.0
+      - name: Upload Artifacts TO Google Drive
+        uses: Jumbo810/Upload_Github_Artifacts_TO_GDrive@v2.2.2
         with:
-          webhookUrl: ${{ secrets.WEBHOOK_URL }}
-          file: ${{ github.workspace }}/build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab
-          channels: 'C089T0M0FEC'
-          title: 'New App Bundle (AAB)'
-          filename: 'app-${{ matrix.flavor }}-release.aab'
+          target: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
+          credentials: service_account.json
+          parent_folder_id: 1ujyuXg8SQovXfwHTy8Hmumgxtl8vq2Wj
+
 
       # Send Slack Notification (Optional: before or after file upload)
 #      - name: Send notification to Slack
