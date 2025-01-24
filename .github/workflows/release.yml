@@ -185,9 +185,8 @@ jobs:
         uses: Jumbo810/Upload_Github_Artifacts_TO_GDrive@v2.2.2
         with:
           target: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
-          credentials: service_account.json
+          credentials: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
           parent_folder_id: 1ujyuXg8SQovXfwHTy8Hmumgxtl8vq2Wj
-
 
       # Send Slack Notification (Optional: before or after file upload)
 #      - name: Send notification to Slack
