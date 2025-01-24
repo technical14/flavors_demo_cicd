@@ -42,7 +42,7 @@ jobs:
           echo "Flavors to build: $FLAVORS_ARRAY"
 
           # Set the flavors array as an output of the step
-          echo "::set-output name=flavors::$FLAVORS_ARRAY"
+          echo "flavors=$FLAVORS_ARRAY" >> $GITHUB_OUTPUT
   build:
     needs: parse
     runs-on: ubuntu-latest
@@ -178,14 +178,18 @@ jobs:
           echo "Package name for $FLAVOR flavor: $PACKAGE_NAME"
 
           # Set the extracted package name as an output for use in later steps
-          echo "::set-output name=PACKAGE_NAME::$PACKAGE_NAME"  # Correct way to set output
+          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+
+      - name: Print the PACKAGE_NAME
+        run: |
+          echo "The extracted PACKAGE_NAME is: ${{ steps.extract-application-id.outputs.PACKAGE_NAME }}"
 
       # Upload AAB to Slack
       - name: Upload Artifacts TO Google Drive
         uses: Jumbo810/Upload_Github_Artifacts_TO_GDrive@v2.2.2
         with:
           target: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
-          credentials: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+          credentials: ${{ secrets.GOOGLE_SERVICE_CREDENTIALS_JSON }}
           parent_folder_id: 1ujyuXg8SQovXfwHTy8Hmumgxtl8vq2Wj
 
       # Send Slack Notification (Optional: before or after file upload)
