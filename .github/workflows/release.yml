@@ -12,7 +12,7 @@ jobs:
       flavors: ${{ steps.set-flavors.outputs.flavors }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       # Step 1: Set up JSON Parsing for create metrix
       # Cache jq
@@ -55,8 +55,8 @@ jobs:
       fail-fast: false
     steps:
       # Step 2: Checkout the repository code
-      - name: Checkout code
-        uses: actions/checkout@v2
+#      - name: Checkout code
+#        uses: actions/checkout@v3
 
       # Cache Flutter SDK
       - name: Cache Flutter SDK
@@ -70,30 +70,30 @@ jobs:
       # Step 3: Set up Flutter SDK
       - name: Set up Flutter SDK
         if: steps.cache.outputs.cache-hit != 'true'
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@v3
         with:
           flutter-version: '3.24.1'  # You can specify a specific Flutter version here, like '3.10.4' as per your Android Studio
 
       # Step 4: Set up Java 17
       - name: Set up Java 17
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           java-version: '17'  # Specify Java as per your Android Studio (gradle-7.5-all version wise change)
           distribution: 'temurin'  # Use AdoptOpenJDK distribution
 
       # Cache jq
-      - name: Cache jq
-        uses: actions/cache@v3
-        with:
-          path: /usr/bin/jq
-          key: ${{ runner.os }}-jq-version-1.6
-          restore-keys: |
-            ${{ runner.os }}-jq-
+#      - name: Cache jq
+#        uses: actions/cache@v3
+#        with:
+#          path: /usr/bin/jq
+#          key: ${{ runner.os }}-jq-version-1.6
+#          restore-keys: |
+#            ${{ runner.os }}-jq-
 
       # Step 5: Set up JSON Parsing
-      - name: Install jq
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: sudo apt-get install jq
+#      - name: Install jq
+#        if: steps.cache.outputs.cache-hit != 'true'
+#        run: sudo apt-get install jq
 
       # Step 6: flutter project clean
       - name: Clean project
