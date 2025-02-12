@@ -63,16 +63,19 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.flutter
-          key: ${{ runner.os }}-flutter-sdk-3.24.1
+          key: ${{ runner.os }}-flutter-sdk-${{ hashFiles('.flutter-version') }}-flutter-${{ steps.flutter-version.outputs.version }}
           restore-keys: |
-            ${{ runner.os }}-flutter-sdk-       
+            ${{ runner.os }}-flutter-sdk-${{ steps.flutter-version.outputs.version }}-
+            ${{ runner.os }}-flutter-sdk-
+        env:
+          FLUTTER_VERSION: '3.24.1'
 
       # Step 3: Set up Flutter SDK
       - name: Set up Flutter SDK
         if: steps.cache.outputs.cache-hit != 'true'
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.1'  # You can specify a specific Flutter version here, like '3.10.4' as per your Android Studio
+          flutter-version: ${{ env.FLUTTER_VERSION }}  # You can specify a specific Flutter version here, like '3.10.4' as per your Android Studio
 
       # Step 4: Set up Java 17
       - name: Set up Java 17
@@ -92,10 +95,10 @@ jobs:
           path: |
             ~/.pub-cache
             build/
-          key: Linux-flutter-deps-${{ hashFiles('pubspec.yaml') }}
+          key: ${{ runner.os }}-flutter-deps-${{ hashFiles('pubspec.yaml') }}
           restore-keys: |
-            Linux-flutter-deps-
-          fail-on-cache-miss: false
+            ${{ runner.os }}-flutter-deps-
+      
 
       # Step 7: Install dependencies
       - name: Install dependencies
