@@ -63,7 +63,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.flutter
-          key: ${{ runner.os }}-flutter-sdk-${{ hashFiles('.flutter-version') }}-flutter-version-3.24.1
+          key: ${{ runner.os }}-flutter-sdk-3.24.1
           restore-keys: |
             ${{ runner.os }}-flutter-sdk-       
 
@@ -81,20 +81,6 @@ jobs:
           java-version: '17'  # Specify Java as per your Android Studio (gradle-7.5-all version wise change)
           distribution: 'temurin'  # Use AdoptOpenJDK distribution
 
-      # Cache jq
-#      - name: Cache jq
-#        uses: actions/cache@v3
-#        with:
-#          path: /usr/bin/jq
-#          key: ${{ runner.os }}-jq-version-1.6
-#          restore-keys: |
-#            ${{ runner.os }}-jq-
-
-      # Step 5: Set up JSON Parsing
-#      - name: Install jq
-#        if: steps.cache.outputs.cache-hit != 'true'
-#        run: sudo apt-get install jq
-
       # Step 6: flutter project clean
       - name: Clean project
         run: flutter clean
@@ -106,9 +92,10 @@ jobs:
           path: |
             ~/.pub-cache
             build/
-          key: ${{ runner.os }}-flutter-deps-${{ hashFiles('pubspec.yaml') }}
+          key: Linux-flutter-deps-${{ hashFiles('pubspec.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-flutter-deps-
+            Linux-flutter-deps-
+          fail-on-cache-miss: false
 
       # Step 7: Install dependencies
       - name: Install dependencies
