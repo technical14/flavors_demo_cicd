@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main   # Trigger action on push to the 'main' branch
+
 jobs:
   parse:
     runs-on: ubuntu-latest
@@ -42,7 +43,7 @@ jobs:
           echo "Flavors to build: $FLAVORS_ARRAY"
 
           # Set the flavors array as an output of the step
-          echo "flavors=$FLAVORS_ARRAY" >> $GITHUB_OUTPUT
+          echo "flavors=$FLAVORS_ARRAY" >> $GITHUB_ENV
   build:
     needs: parse
     runs-on: ubuntu-latest
@@ -61,7 +62,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.flutter
-          key: ${{ runner.os }}-flutter-sdk-${{ hashFiles('.flutter-version') }}
+          key: ${{ runner.os }}-flutter-sdk-${{ hashFiles('.flutter-version') }}-flutter-version-3.24.1
           restore-keys: |
             ${{ runner.os }}-flutter-sdk-       
 
@@ -161,80 +162,7 @@ jobs:
               echo "Successfully built APK and AAB for $FLAVOR"
           else
             echo "Skipping build for flavor $FLAVOR because is_upload is false."
-          fi
-
-      # Step 9: Extract service_account from flavors.json use When direct (Upload in google playstore)
-      - name: Extracting service_account from flavors.json
-        id: extract-application-id
-        run: |
-          service_account=$(jq -r '.flavors["${{ matrix.flavor }}"].service_account' flavors.json)
-          echo "Service Account: $service_account"
-          echo "$service_account" > service_account.json
-          cat service_account.json
-
-          PACKAGE_NAME=$(jq -r --arg flavor "${{ matrix.flavor }}" '.flavors[] | select(.name == $flavor) | .application_id' flavors.json)
-
-          # Output the package name for debugging purposes
-          echo "Package name for $FLAVOR flavor: $PACKAGE_NAME"
-
-          # Set the extracted package name as an output for use in later steps
-          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_OUTPUT
-
-      - name: Print the PACKAGE_NAME
-        run: |
-          echo "The extracted PACKAGE_NAME is: ${{ steps.extract-application-id.outputs.PACKAGE_NAME }}"
-
-      # Upload AAB to Slack
-      - name: Upload Artifacts TO Google Drive
-        uses: Jumbo810/Upload_Github_Artifacts_TO_GDrive@v2.2.2
-        with:
-          target: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
-          credentials: ${{ secrets.GOOGLE_SERVICE_CREDENTIALS_JSON }}
-          parent_folder_id: 1ujyuXg8SQovXfwHTy8Hmumgxtl8vq2Wj
-
-      # Send Slack Notification (Optional: before or after file upload)
-#      - name: Send notification to Slack
-#        uses: slackapi/slack-github-action@v1.24.0
-#        with:
-#          botToken: "xoxb-8232907570615-8313266494726-JL75KJfiakRW1zrPM15VlGix"  # Slack Bot Token from GitHub Secrets
-#          text: "A new App Bundle (AAB) has been uploaded to Slack!"  # Your message
-#          channels: 'C089T0M0FEC'  # Slack channel name
-
-      # Step 1: Install dependencies (jq, curl, Google Cloud SDK)
-#      - name: Upload to gdrive
-#        uses: adityak74/google-drive-upload-git-action@main
-#        with:
-#          credentials: ${{ secrets.GCP_CREDENTIAL }}
-#          filename: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
-#          folderId: ${{ secrets.DRIVE_FOLDER_ID }}
-#          name: "app-${{ matrix.flavor }}-release.aab" # optional string
-#          overwrite: "true" # optional boolean
-#
-#      - name: Make Directory Structure
-#        run: |
-#          mkdir -p w/x/y
-#          date +%s > w/x/y/z
-#
-#      - name: Mirror Directory Structure
-#        uses: adityak74/google-drive-upload-git-action@main
-#        with:
-#          credentials: ${{ secrets.GCP_CREDENTIAL }}
-#          filename: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
-#          folderId: ${{ secrets.DRIVE_FOLDER_ID }}
-#          overwrite: "true"
-#          mirrorDirectoryStructure: "true"
-
-      # Step 1: Install dependencies (jq, curl, Google Cloud SDK)
-#      - name: Install dependencies
-#        run: |
-#          sudo apt-get update
-#          sudo apt-get install -y jq curl unzip
-
-      # Step 10: Extract service_account from flavors.json use When direct (Upload in google playstore)
-#      - name: Set up Google Cloud SDK
-#        uses: google-github-actions/setup-gcloud@v2
-#        with:
-#          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          fi          
 
       # Step 10: Extract service_account from flavors.json use When direct (Upload in google playstore)
 #      - name: Extracting service_account from flavors.json
@@ -251,26 +179,23 @@ jobs:
 #
 #          # Set the extracted package name as an output for use in later steps
 #          echo "::set-output name=PACKAGE_NAME::$PACKAGE_NAME"  # Correct way to set output
-#
-#      # Step 3: Authenticate using the service account JSON
-#      - name: Authenticate Google Cloud SDK
-#        run: |
-#          gcloud auth activate-service-account --key-file=./service_account.json  # Use the temporary file for authentication
-#          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
-#
-#      # Step 12: Upload the file to Google Drive
-#      - name: Upload AAB File to Google Drive
-#        run: |
-#          FILE_PATH="build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
-#          FILE_NAME="app-${{ matrix.flavor }}-release.aab"
-#          FOLDER_ID="${{ secrets.DRIVE_FOLDER_ID }}"  # Retrieve folder ID from the secret
-#
-#          echo "Uploading file ${FILE_PATH} to Google Drive..."
-#
-#          # Upload file to Google Drive using curl
-#          curl -X POST \
-#            -L \
-#            -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
-#            -F "metadata={name :'${FILE_NAME}', parents: ['${FOLDER_ID}']};type=application/json" \
-#            -F "file=@${FILE_PATH};type=application/octet-stream" \
-#            "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart"
+
+      # Step 11: Deploy to Play Store (Upload in google playstore)
+#      - name: Deploying app to Play Store
+#        id: deploy
+#        if: ${{ steps.extract-application-id.outputs.PACKAGE_NAME != '' && steps.extract-application-id.outputs.PACKAGE_NAME != 'null' }}
+#        uses: r0adkll/upload-google-play@v1.1.3
+#        with:
+#          serviceAccountJson: service_account.json
+#          packageName: ${{ steps.extract-application-id.outputs.PACKAGE_NAME }}  # Use the extracted package name directly
+#          releaseFiles: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
+#          track: production
+#          status: 'completed'
+
+      # Step 12: Upload AAB to GitHub Actions Artifacts (Optional, if you want to store the AABs as artifacts) success() always()
+      - name: Upload AAB for flavor ${{ matrix.flavor }}
+        if: failure()
+        uses: actions/upload-artifact@v4.6.0
+        with:
+          name: "${{ matrix.flavor }}-release-aab"
+          path: "build/app/outputs/bundle/${{ matrix.flavor }}Release/app-${{ matrix.flavor }}-release.aab"
