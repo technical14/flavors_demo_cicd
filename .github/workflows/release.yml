@@ -44,6 +44,7 @@ jobs:
 
           # Set the flavors array as an output of the step
           echo "flavors=$FLAVORS_ARRAY" >> $GITHUB_ENV
+          echo "::set-output name=flavors::$FLAVORS_ARRAY"
   build:
     needs: parse
     runs-on: ubuntu-latest
