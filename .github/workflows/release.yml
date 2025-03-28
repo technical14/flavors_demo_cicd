@@ -49,15 +49,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # Cache Flutter SDK
-      - name: Cache Flutter SDK
-        uses: actions/cache@v3
-        with:
-          path: ~/.flutter
-          key: ${{ runner.os }}-flutter-sdk-${{ hashFiles('.flutter-version') }}
-          restore-keys: |
-            ${{ runner.os }}-flutter-sdk-       
-
       # Step 2: Set up Flutter SDK
       - name: Set up Flutter SDK
         if: steps.cache.outputs.cache-hit != 'true'
@@ -168,7 +159,7 @@ jobs:
       # Step 9: Upload IPA for iOS to GitHub Actions Artifacts
       - name: Upload IPA for flavor ${{ matrix.flavor }}
         if: matrix.platform == 'ios' && success()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4.6.0
         with:
           name: "${{ matrix.flavor }}-release-ipa"
           path: "build/ios/iphoneos/Runner.app"
@@ -186,10 +177,10 @@ jobs:
         run: |
           xcodebuild -exportArchive -archivePath $PWD/build/sandbox.xcarchive -exportPath $PWD/build/ipa -exportOptionsPlist ios/ExportOptions.plist
 
-      # Step 12: Upload IPA as an artifact
-      - name: Upload IPA
-        if: matrix.platform == 'ios'
-        uses: actions/upload-artifact@v3
-        with:
-          name: iOS-App-IPA
-          path: $PWD/build/ipa/*.ipa
+#      # Step 12: Upload IPA as an artifact
+#      - name: Upload IPA
+#        if: matrix.platform == 'ios'
+#        uses: actions/upload-artifact@v4.6.0
+#        with:
+#          name: iOS-App-IPA
+#          path: $PWD/build/ipa/*.ipa
