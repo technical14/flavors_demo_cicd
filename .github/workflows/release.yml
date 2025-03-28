@@ -126,6 +126,9 @@ jobs:
           APP_IDENTIFIER=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .app_identifier")
           TEAM_ID=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .team_id")
           PROFILE_BASE64=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .provisioning_profile_base64")
+          
+          APP_NAME=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .app_name")
+          SCHEMA_NAME=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .name")
 
           # If you want to extract other data, you can do it similarly:
           IS_IOS_UPLOAD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .is_ios_upload")
@@ -137,18 +140,43 @@ jobs:
           echo "Certificate password: $CERT_PASSWORD"
           echo "App Identifier: $APP_IDENTIFIER"
           echo "Team ID: $TEAM_ID"
+          echo "Certificate base64: $CERT_BASE64"
+          echo "Provisioning Profile: $PROFILE_BASE64"
 
           # Check if is_upload is true before proceeding with the build
           if [[ "$IS_IOS_UPLOAD" == "true" ]]; then
 
               if [[ "${{ matrix.platform }}" == "ios" || "$IS_IOS_UPLOAD" == "true" ]]; then
-                  echo "Running iOS build for flavor: $FLAVOR"
-                  flutter build ipa \
-                    --flavor $FLAVOR \
-                    --target=$ENTRY_POINT \
-                    --release \
-                    --build-name=$VERSION \
-                    --build-number=$BUILD_NUMBER
+                  echo "APPLE_ID=$APPLE_ID" >> $GITHUB_ENV
+                  echo "APP_PASSWORD=$APP_PASSWORD" >> $GITHUB_ENV
+                  echo "CERT_BASE64=$CERT_BASE64" >> $GITHUB_ENV
+                  echo "CERT_PASSWORD=$CERT_PASSWORD" >> $GITHUB_ENV
+                  echo "APP_IDENTIFIER=$APP_IDENTIFIER" >> $GITHUB_ENV
+                  echo "TEAM_ID=$TEAM_ID" >> $GITHUB_ENV
+                  echo "PROFILE_BASE64=$PROFILE_BASE64" >> $GITHUB_ENV
+                  
+                  # Set up the signing certificate
+                  echo "$CERT_BASE64" | base64 --decode > certificate.p12
+                  security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+                  security import certificate.p12 -k ~/Library/Keychains/build.keychain -P "$CERT_PASSWORD" -T /usr/bin/codesign
+                  security set-keychain-settings -t 3600 -u build.keychain
+                  
+                  # Set up provisioning profile
+                  echo "$PROFILE_BASE64" | base64 --decode > provisioning_profile.mobileprovision
+                  mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+                  mv provisioning_profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+          
+                  # Build IPA
+                  # Set environment variables for Xcode build
+                  xcodebuild clean build \
+                    -workspace $APP_NAME.xcworkspace \
+                    -scheme $SCHEMA_NAME \
+                    -configuration Release \
+                    -destination 'generic/platform=iOS' \
+                    CODE_SIGN_IDENTITY="Apple Development" \
+                    PROVISIONING_PROFILE_SPECIFIER="iOS Team Provisioning Profile" \
+                    DEVELOPMENT_TEAM="$TEAM_ID" \
+                    -archivePath build/$APP_NAME.xcarchive
               else
                 echo "Skipping iOS build for flavor $FLAVOR due to condition mismatch."
               fi
