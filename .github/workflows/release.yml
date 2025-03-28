@@ -7,7 +7,7 @@ on:
 
 jobs:
   parse:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     outputs:
       flavors: ${{ steps.set-flavors.outputs.flavors }}
     steps:
@@ -31,9 +31,9 @@ jobs:
       - name: Parse flavors from JSON
         id: set-flavors
         run: |
-          # Read the JSON file and extract the list of flavors where is_upload is true
+          # Read the JSON file and extract the list of flavors where is_ios_upload is true
           FLAVORS_JSON=$(cat flavors.json)
-          FLAVORS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_upload == true) | .value.name')
+          FLAVORS_LIST=$(echo "$FLAVORS_JSON" | jq -r '.flavors | to_entries[] | select(.value.is_ios_upload == true) | .value.name')
 
           # Add quotes around each flavor to properly form the array
           FLAVORS_ARRAY=$(echo "$FLAVORS_LIST" | sed 's/^/"/;s/$/"/' | paste -sd "," -)
@@ -143,13 +143,11 @@ jobs:
           STORE_PASSWORD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"].store_password")
 
           # If you want to extract other data, you can do it similarly:
-          IS_UPLOAD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .is_upload")
           IS_IOS_UPLOAD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .is_ios_upload")
 
           # Print the extracted data
           echo "Flavor: $FLAVOR"
           echo "Entry Point: $ENTRY_POINT"
-          echo "Is Upload: $IS_UPLOAD"
           echo "Build Number: $BUILD_NUMBER"
           echo "Key Alias: $KEY_ALIAS"
           echo "Key Password: $KEY_PASSWORD"
@@ -161,12 +159,7 @@ jobs:
               # Decode the keystore from base64
               mkdir -p keystore
               echo "$KEYS" | base64 -d > keystore/$FLAVOR.keystore.jks
-
-              # Set environment variables for signing
-              export KEYSTORE_PATH="keystore/$FLAVOR.keystore.jks"
-              export KEY_ALIAS
-              export KEY_PASSWORD
-              export STORE_PASSWORD
+          if [[ "$IS_IOS_UPLOAD" == "true" ]]; then
 
               if [[ "${{ matrix.platform }}" == "ios" || "$IS_IOS_UPLOAD" == "true" ]]; then
                   echo "Running iOS build for flavor: $FLAVOR"
@@ -180,17 +173,7 @@ jobs:
                 echo "Skipping iOS build for flavor $FLAVOR due to condition mismatch."
               fi
           
-              if [[ "${{ matrix.platform }}" == "android" ]]; then
-                  echo "Running Android build for flavor: $FLAVOR"
-                  flutter build appbundle \
-                    --flavor $FLAVOR \
-                    --target=$ENTRY_POINT \
-                    --release \
-                    --build-name=$VERSION \
-                    --build-number=$BUILD_NUMBER
-              else
-                echo "Skipping iOS build for flavor $FLAVOR due to condition mismatch."
-              fi
+      
               echo "Successfully built APK and AAB for $FLAVOR"
           else
             echo "Skipping build for flavor $FLAVOR because is_upload is false."
