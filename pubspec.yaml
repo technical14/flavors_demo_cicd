@@ -104,25 +104,28 @@ flutter_flavor:
       android:
         name: "Production"
         applicationId: "production.app.com"
-    development:
-      android:
-        name: "Development"
-        applicationId: "development.com"
       ios:
-        name: "Development"
-        bundleId: "development.com"
-    staging:
-      android:
-        name: "Staging"
-        applicationId: "com.app.staging"
-      ios:
-        name: "Staging"
-        bundleId: "com.app.staging"
-    environment:
-      android:
-        name: "Environment"
-        applicationId: "com.environment"
-      ios:
-        name: "Environment"
-        bundleId: "com.environment"
+        name: "Production"
+        applicationId: "production.app.com"
+#    development:
+#      android:
+#        name: "Development"
+#        applicationId: "development.com"
+#      ios:
+#        name: "Development"
+#        bundleId: "development.com"
+#    staging:
+#      android:
+#        name: "Staging"
+#        applicationId: "com.app.staging"
+#      ios:
+#        name: "Staging"
+#        bundleId: "com.app.staging"
+#    environment:
+#      android:
+#        name: "Environment"
+#        applicationId: "com.environment"
+#      ios:
+#        name: "Environment"
+#        bundleId: "com.environment"
 
