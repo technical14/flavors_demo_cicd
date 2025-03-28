@@ -117,7 +117,22 @@ jobs:
           echo "$apple_account" > apple_account.json
           cat apple_account.json
 
-          PACKAGE_NAME=$(jq -r --arg flavor "${{ matrix.flavor }}" '.flavors[] | select(.name == $flavor) | .app_identifier' flavors.json)
+          APPLE_ID=$(jq -r --arg flavor "${{ matrix.flavor }}" '.flavors[] | select(.name == $flavor) | .apple_id' flavors.json)     
+          APP_PASSWORD=$(jq -r --arg flavor "${{ matrix.flavor }}" '.flavors[] | select(.name == $flavor) | .app_specific_password' flavors.json)     
+          CERT_BASE64=$(jq -r --arg flavor "${{ matrix.flavor }}" '.flavors[] | select(.name == $flavor) | .developer_certificate_base64' flavors.json)     
+          CERT_PASSWORD=$(jq -r --arg flavor "${{ matrix.flavor }}" '.flavors[] | select(.name == $flavor) | .developer_certificate_password' flavors.json)     
+          APP_IDENTIFIER=$(jq -r --arg flavor "${{ matrix.flavor }}" '.flavors[] | select(.name == $flavor) | .app_identifier' flavors.json)     
+          TEAM_ID=$(jq -r --arg flavor "${{ matrix.flavor }}" '.flavors[] | select(.name == $flavor) | .team_id' flavors.json)     
+          PROFILE_BASE64=$(jq -r --arg flavor "${{ matrix.flavor }}" '.flavors[] | select(.name == $flavor) | .provisioning_profile_base64' flavors.json)
+          
+          # Debugging
+          echo "Apple ID: $APPLE_ID"
+          echo "App Password: $APP_PASSWORD"
+          echo "Certificate base64: $CERT_BASE64"
+          echo "Certificate password: $CERT_PASSWORD"
+          echo "App Identifier: $APP_IDENTIFIER"
+          echo "Team ID: $TEAM_ID"
+          echo "Provisioning Profile base64: $PROFILE_BASE64"
 
           # Output the package name for debugging purposes
           echo "Package name for $FLAVOR flavor: $PACKAGE_NAME"
