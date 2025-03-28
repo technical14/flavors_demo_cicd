@@ -42,7 +42,7 @@ jobs:
     strategy:
       matrix:
         flavor: ${{ fromJson(needs.parse.outputs.flavors) }}
-        platform: [android, ios]  # For Android
+        platform: [ios]  # For Android
       fail-fast: false
     steps:
       # Step 1: Checkout the repository code
