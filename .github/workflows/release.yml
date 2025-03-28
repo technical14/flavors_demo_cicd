@@ -119,32 +119,24 @@ jobs:
           ENTRY_POINT=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .entrypoint")
           VERSION=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .version")
           BUILD_NUMBER=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .build_number")
+          APPLE_ID=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .apple_id")
+          APP_PASSWORD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .app_specific_password")
+          CERT_BASE64=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .developer_certificate_base64")
+          CERT_PASSWORD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .developer_certificate_password")
+          APP_IDENTIFIER=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .app_identifier")
+          TEAM_ID=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .team_id")
+          PROFILE_BASE64=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .provisioning_profile_base64")
 
           # If you want to extract other data, you can do it similarly:
           IS_IOS_UPLOAD=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .is_ios_upload")
 
           # Print the extracted data
           echo "Flavor: $FLAVOR"
-          
-          apple_account=$(jq -r '.flavors["${{ matrix.flavor }}"].apple_account' flavors.json)
-          echo "$apple_account" > apple_account.json
-          cat apple_account.json
-
-          APPLE_ID=$(jq -r --arg flavor "${{ matrix.flavor }}" '.flavors[] | select(.name == $flavor) | .apple_id' flavors.json)     
-          APP_PASSWORD=$(jq -r --arg flavor "${{ matrix.flavor }}" '.flavors[] | select(.name == $flavor) | .app_specific_password' flavors.json)     
-          CERT_BASE64=$(jq -r --arg flavor "${{ matrix.flavor }}" '.flavors[] | select(.name == $flavor) | .developer_certificate_base64' flavors.json)     
-          CERT_PASSWORD=$(jq -r --arg flavor "${{ matrix.flavor }}" '.flavors[] | select(.name == $flavor) | .developer_certificate_password' flavors.json)     
-          APP_IDENTIFIER=$(jq -r --arg flavor "${{ matrix.flavor }}" '.flavors[] | select(.name == $flavor) | .app_identifier' flavors.json)     
-          TEAM_ID=$(jq -r --arg flavor "${{ matrix.flavor }}" '.flavors[] | select(.name == $flavor) | .team_id' flavors.json)     
-          PROFILE_BASE64=$(jq -r --arg flavor "${{ matrix.flavor }}" '.flavors[] | select(.name == $flavor) | .provisioning_profile_base64' flavors.json)
-          
           echo "Apple ID: $APPLE_ID"
           echo "App Password: $APP_PASSWORD"
-          echo "Certificate base64: $CERT_BASE64"
           echo "Certificate password: $CERT_PASSWORD"
           echo "App Identifier: $APP_IDENTIFIER"
           echo "Team ID: $TEAM_ID"
-          echo "Provisioning Profile base64: $PROFILE_BASE64"
 
           # Check if is_upload is true before proceeding with the build
           if [[ "$IS_IOS_UPLOAD" == "true" ]]; then

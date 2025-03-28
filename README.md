@@ -31,3 +31,14 @@ More informations about Firebase on [firebase.com](https://www.firebase.com)
 ## About us
 
 Please visit our website [xpeho.fr](https://www.xpeho.fr/)
+
+[//]: # (apple_account=$&#40;jq -r '.flavors["${{ matrix.flavor }}"].apple_account' flavors.json&#41;)
+
+[//]: # (echo "$apple_account" > apple_account.json)
+
+[//]: # (cat apple_account.json)
+
+[//]: # ()
+[//]: # (echo "Certificate base64: $CERT_BASE64")
+
+[//]: # (echo "Provisioning Profile base64: $PROFILE_BASE64")
