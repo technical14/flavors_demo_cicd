@@ -14,19 +14,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # Step 1: Set up JSON Parsing
-      # Cache jq
-      - name: Cache jq
-        uses: actions/cache@v3
-        with:
-          path: /usr/bin/jq
-          key: ${{ runner.os }}-jq-version-1.6
-          restore-keys: |
-            ${{ runner.os }}-jq-
-
-      - name: Install jq
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: sudo apt-get install jq
+      - name: Install jq with Homebrew
+        run: |
+          # Install jq using Homebrew (macOS package manager)
+          brew install jq
 
       - name: Parse flavors from JSON
         id: set-flavors
@@ -154,11 +145,6 @@ jobs:
           echo "Store Password: $STORE_PASSWORD"
 
           # Check if is_upload is true before proceeding with the build
-          if [[ "$IS_UPLOAD" == "true" ]]; then
-
-              # Decode the keystore from base64
-              mkdir -p keystore
-              echo "$KEYS" | base64 -d > keystore/$FLAVOR.keystore.jks
           if [[ "$IS_IOS_UPLOAD" == "true" ]]; then
 
               if [[ "${{ matrix.platform }}" == "ios" || "$IS_IOS_UPLOAD" == "true" ]]; then
