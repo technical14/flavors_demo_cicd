@@ -109,6 +109,25 @@ jobs:
       #          cd ios
       #          pod install --repo-update
 
+      #Step 7: Import Distribution Certificate
+      - name: Extracting apple_account from flavors.json
+        id: extract-application-id
+        env:
+          DEVELOPER_CERTIFICATE_BASE64: ${{ secrets.DEVELOPER_CERTIFICATE_BASE64 }}
+          DEVELOPER_CERTIFICATE_PASSWORD: ${{ secrets.DEVELOPER_CERTIFICATE_PASSWORD }}
+        run: |
+          apple_account=$(jq -r '.flavors["${{ matrix.flavor }}"].apple_account' flavors.json)
+          echo "apple_account" > apple_account.json
+          cat apple_account.json
+          
+          echo "$DEVELOPER_CERTIFICATE_BASE64" | base64 --decode > distribution.p12
+          security create-keychain -p "ci" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "ci" build.keychain
+          security import distribution.p12 -k build.keychain -P "$DEVELOPER_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security list-keychains -s build.keychain
+          security set-key-partition-list -S apple-tool:,apple: -s -k "ci" build.keychain
+
       #Step 8: Upload APK Android and Ios
       - name: Build APK for flavor ${{ matrix.flavor }}
         run: |

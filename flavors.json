@@ -13,8 +13,13 @@
       "app_name": "Sandbox",
       "keystore_path": "keystore/sandbox.jks",
       "is_ios_upload": true,
-      "service_account": {
-
+      "apple_account": {
+        "apple_id": "",
+        "app_specific_password": "",
+        "developer_certificate_base64": "",
+        "developer_certificate_password": "",
+        "app_identifier": "com.sandbox",
+        "team_id": ""
       }
     },
     "production":{
