@@ -29,7 +29,7 @@
       "application_id": "production.app.com",
       "app_name": "Production",
       "keystore_path": "keystore/production.jks",
-      "is_ios_upload": true,
+      "is_ios_upload": false,
       "service_account": {
       }
     }
