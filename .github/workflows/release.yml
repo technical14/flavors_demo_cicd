@@ -109,6 +109,22 @@ jobs:
       #          cd ios
       #          pod install --repo-update
 
+      # Step 7: Extract apple_account from flavors.json
+      - name: Extracting apple_account from flavors.json
+        id: extract-application-id
+        run: |
+          apple_account=$(jq -r '.flavors["${{ matrix.flavor }}"].apple_account' flavors.json)
+          echo "$apple_account" > apple_account.json
+          cat apple_account.json
+
+          PACKAGE_NAME=$(jq -r --arg flavor "${{ matrix.flavor }}" '.flavors[] | select(.name == $flavor) | .app_identifier' flavors.json)
+
+          # Output the package name for debugging purposes
+          echo "Package name for $FLAVOR flavor: $PACKAGE_NAME"
+
+          # Set the extracted package name as an output for use in later steps
+          echo "::set-output name=PACKAGE_NAME::$PACKAGE_NAME"  # Correct way to set output
+
       #Step 8: Upload APK Android and Ios
       - name: Build APK for flavor ${{ matrix.flavor }}
         run: |
@@ -155,17 +171,17 @@ jobs:
           path: "build/ios/iphoneos/Runner.app"
 
       # Step 10: Archive the iOS app using the sandbox scheme
-      - name: Archive iOS app
-        if: matrix.platform == 'ios'
-        run: |
-          xcodebuild clean -workspace ios/Runner.xcworkspace -scheme sandbox -configuration Release
-          xcodebuild archive -workspace ios/Runner.xcworkspace -scheme sandbox -configuration Release -archivePath $PWD/build/sandbox.xcarchive
-
-      # Step 11: Export IPA
-      - name: Export IPA
-        if: matrix.platform == 'ios'
-        run: |
-          xcodebuild -exportArchive -archivePath $PWD/build/sandbox.xcarchive -exportPath $PWD/build/ipa -exportOptionsPlist ios/ExportOptions.plist
+#      - name: Archive iOS app
+#        if: matrix.platform == 'ios'
+#        run: |
+#          xcodebuild clean -workspace ios/Runner.xcworkspace -scheme sandbox -configuration Release
+#          xcodebuild archive -workspace ios/Runner.xcworkspace -scheme sandbox -configuration Release -archivePath $PWD/build/sandbox.xcarchive
+#
+#      # Step 11: Export IPA
+#      - name: Export IPA
+#        if: matrix.platform == 'ios'
+#        run: |
+#          xcodebuild -exportArchive -archivePath $PWD/build/sandbox.xcarchive -exportPath $PWD/build/ipa -exportOptionsPlist ios/ExportOptions.plist
 
 #      # Step 12: Upload IPA as an artifact
 #      - name: Upload IPA

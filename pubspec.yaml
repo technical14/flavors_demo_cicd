@@ -96,10 +96,10 @@ flutter_flavor:
     sandbox:
       android:
         name: "SandBox"
-        applicationId: "com.sandbox"
+        applicationId: "com.bontonholidays.bontonb2b"
       ios:
         name: "SandBox"
-        bundleId: "com.sandbox"
+        bundleId: "com.bontonholidays.bontonb2b"
     production:
       android:
         name: "Production"
