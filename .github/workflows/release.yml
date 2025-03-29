@@ -179,9 +179,6 @@ jobs:
                     PROVISIONING_PROFILE_SPECIFIER="$PROVISIONING_PROFILE_SPECIFIER" \
                     DEVELOPMENT_TEAM="$TEAM_ID" \
                     -archivePath build/$SCHEMA_NAME.xcarchive
-                    ONLY_ACTIVE_ARCH=YES \
-                    CODE_SIGNING_REQUIRED=YES \
-                    CODE_SIGNING_ALLOWED=YES
               else
                 echo "Skipping iOS build for flavor $FLAVOR due to condition mismatch."
               fi
