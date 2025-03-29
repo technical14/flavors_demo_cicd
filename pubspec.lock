@@ -247,7 +247,7 @@ packages:
       sha256: "4843174df4d288f5e29185bd6e72a6fbdf5a4a4602717eed565497429f179942"
       url: "https://pub.dev"
     source: hosted
-    version: "2.4.1"
+    version: "2.3.2"
   path_provider_linux:
     dependency: transitive
     description:
@@ -388,7 +388,7 @@ packages:
       sha256: e43b677296fadce447e987a2f519dcf5f6d1e527dc35d01ffab4fff5b8a7063e
       url: "https://pub.dev"
     source: hosted
-    version: "6.3.1"
+    version: "6.2.5"
   url_launcher_linux:
     dependency: transitive
     description:
