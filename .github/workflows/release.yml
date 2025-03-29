@@ -67,8 +67,11 @@ jobs:
       # Step 4: Clean Flutter project (optional, if you want a fresh build)
       - name: Clean Flutter project
         run: |
+          rm -rf ios/Pods
+          rm -rf ios/.symlinks
+          rm -rf ios/Flutter/Flutter.podspec
+          rm -rf ~/Library/Developer/Xcode/DerivedData
           flutter clean
-          rm -rf ios/Pods ios/Podfile.lock
 
       # Step 5: Get Flutter dependencies
       - name: Get Flutter dependencies
@@ -104,6 +107,9 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           flutter pub get  # Get Flutter project dependencies
+          
+      - name: Build IOS Project
+        run: flutter build ios --release
 
       # Step 9: Install CocoaPods dependencies
       #      - name: Install CocoaPods dependencies
@@ -111,7 +117,7 @@ jobs:
       #          cd ios
       #          pod install --repo-update
 
-      #Step 8: Upload APK Android and Ios
+      #Step 8: Build IPA for flavor
       - name: Build APK for flavor ${{ matrix.flavor }}
         run: |
           FLAVOR="${{ matrix.flavor }}"
