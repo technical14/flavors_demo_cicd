@@ -51,3 +51,25 @@ DEVELOPMENT_TEAM="$TEAM_ID" \
 ONLY_ACTIVE_ARCH=NO \
 CODE_SIGNING_REQUIRED=YES \
 CODE_SIGNING_ALLOWED=NO
+
+      # Step 4: Clean Flutter project (optional, if you want a fresh build)
+      - name: Clean Flutter project
+        run: |
+          flutter clean
+          rm -rf ios/Pods ios/.symlinks ios/Flutter/Flutter.framework ios/Flutter/Flutter.podspec ios/Runner.xcworkspace ios/Podfile.lock
+
+      # Step 5: Get Flutter dependencies
+      - name: Get Flutter dependencies
+        run: flutter pub get
+
+      # Step 6: Install dependencies using CocoaPods
+      - name: Install Pods
+        if: matrix.platform == 'ios'
+        run: |
+          cd ios
+          pod install --verbose  # Install dependencies
+          cd ..
+
+      - name: Build iOS
+        run: |
+          flutter build ios --no-codesign
