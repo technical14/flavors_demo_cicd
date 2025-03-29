@@ -113,13 +113,8 @@ jobs:
           cd ios
           rm -rf ~/Library/Developer/Xcode/DerivedData
           pod deintegrate
-          pod install --repo-update
+          pod install --verbose
           cd ..
-
-      - name: Ensure Swift Version is Set
-        run: |
-          echo "export SWIFT_VERSION=5.0" >> $GITHUB_ENV
-          echo "export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer" >> $GITHUB_ENV
 
       - name: Build iOS App
         run: flutter build ios --release --no-codesign
