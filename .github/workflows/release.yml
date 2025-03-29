@@ -76,12 +76,8 @@ jobs:
       - name: Install Pods
         if: matrix.platform == 'ios'
         run: |
-          flutter doctor
-          flutter pub get
-          flutter build ios --no-codesign
           cd ios
-          pod install --verbose
-          cd ..
+          pod install  # Install dependencies
 
       # Step 7: Set up Xcode (specific version)
       - name: Install Xcode 16.1 (Manual Setup)
