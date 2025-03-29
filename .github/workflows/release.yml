@@ -171,7 +171,7 @@ jobs:
                   # Build IPA
                   # Set environment variables for Xcode build
                   xcodebuild clean build \
-                    -workspace ios/$APP_NAME.xcworkspace \
+                    -workspace ios/$SCHEMA_NAME.xcworkspace \
                     -scheme $SCHEMA_NAME \
                     -configuration Release \
                     -destination 'generic/platform=iOS' \
