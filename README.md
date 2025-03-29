@@ -38,7 +38,16 @@ Please visit our website [xpeho.fr](https://www.xpeho.fr/)
 
 [//]: # (cat apple_account.json)
 
-[//]: # ()
-[//]: # (echo "Certificate base64: $CERT_BASE64")
-
-[//]: # (echo "Provisioning Profile base64: $PROFILE_BASE64")
+xcodebuild clean build \
+-workspace ios/Runner.xcworkspace \
+-scheme $SCHEMA_NAME \
+-configuration Release-sandbox \
+-destination 'generic/platform=iOS' \
+-archivePath build/"$SCHEMA_NAME".xcarchive \
+CODE_SIGN_STYLE=Manual \
+CODE_SIGN_IDENTITY="Apple Distribution" \
+PROVISIONING_PROFILE_SPECIFIER="$PROVISIONING_PROFILE_SPECIFIER" \
+DEVELOPMENT_TEAM="$TEAM_ID" \
+ONLY_ACTIVE_ARCH=NO \
+CODE_SIGNING_REQUIRED=YES \
+CODE_SIGNING_ALLOWED=NO
