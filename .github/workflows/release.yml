@@ -66,7 +66,9 @@ jobs:
 
       # Step 4: Clean Flutter project (optional, if you want a fresh build)
       - name: Clean Flutter project
-        run: flutter clean
+        run: |
+          flutter clean
+          rm -rf ios/Pods ios/.symlinks ios/Flutter/Flutter.framework ios/Flutter/Flutter.podspec ios/Runner.xcworkspace ios/Podfile.lock
 
       # Step 5: Get Flutter dependencies
       - name: Get Flutter dependencies
@@ -77,7 +79,12 @@ jobs:
         if: matrix.platform == 'ios'
         run: |
           cd ios
-          pod install  # Install dependencies
+          pod install --verbose  # Install dependencies
+          cd ..
+
+      - name: Build iOS
+        run: |
+          flutter build ios --no-codesign    
 
       # Step 7: Set up Xcode (specific version)
       - name: Install Xcode 16.1 (Manual Setup)
