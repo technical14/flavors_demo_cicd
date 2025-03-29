@@ -127,6 +127,9 @@ jobs:
           TEAM_ID=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .team_id")
           PROFILE_BASE64=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .provisioning_profile_base64")
           PROVISIONING_PROFILE_SPECIFIER=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .provisioning_profile_specifier")
+          APP_STORE_KEY_ID=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .app_store_key_id")
+          APP_STORE_ISSUER_ID=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .app_store_issuer_id")
+          APP_STORE_KEY_CONTENT=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .app_store_key_content_base64")
           
           APP_NAME=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .app_name")
           SCHEMA_NAME=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .name")
@@ -156,6 +159,9 @@ jobs:
                   echo "APP_IDENTIFIER=$APP_IDENTIFIER" >> $GITHUB_ENV
                   echo "TEAM_ID=$TEAM_ID" >> $GITHUB_ENV
                   echo "PROFILE_BASE64=$PROFILE_BASE64" >> $GITHUB_ENV
+                  echo "APP_STORE_KEY_ID=$APP_STORE_KEY_ID" >> $GITHUB_ENV
+                  echo "APP_STORE_ISSUER_ID=$APP_STORE_ISSUER_ID" >> $GITHUB_ENV
+                  echo "APP_STORE_KEY_CONTENT=APP_STORE_KEY_CONTENT" >> $GITHUB_ENV
                   
                   # Set up the signing certificate
                   echo "$CERT_BASE64" | base64 --decode > certificate.p12
@@ -188,8 +194,8 @@ jobs:
                     CODE_SIGNING_REQUIRED=YES \
                     CODE_SIGNING_ALLOWED=YES
                     -authenticationKeyPath ./AuthKey.p8 \
-                    -authenticationKeyID TKDWPQD0V09R \
-                    -authenticationKeyIssuerID 69a6de8c-9519-47e3-e053-5b8c7c11a4d1
+                    -authenticationKeyID $APP_STORE_KEY_ID \
+                    -authenticationKeyIssuerID $APP_STORE_ISSUER_ID
               else
                 echo "Skipping iOS build for flavor $FLAVOR due to condition mismatch."
               fi
