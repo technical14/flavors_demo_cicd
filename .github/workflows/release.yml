@@ -171,11 +171,13 @@ jobs:
                   # Build IPA
                   # Set environment variables for Xcode build
                   xcodebuild clean build \
-                    -workspace ios/Runner.xcworkspace \
+                    -workspace ios/$APP_NAME.xcworkspace \
                     -scheme $SCHEMA_NAME \
                     -configuration Release \
                     -destination 'generic/platform=iOS' \
-                    CODE_SIGN_STYLE="Automatic" \
+                    CODE_SIGN_STYLE="Manual" \
+                    CODE_SIGN_IDENTITY="Apple Development" \
+                    PROVISIONING_PROFILE_SPECIFIER="$PROVISIONING_PROFILE_SPECIFIER" \
                     DEVELOPMENT_TEAM="$TEAM_ID" \
                     -archivePath build/$APP_NAME.xcarchive
               else
