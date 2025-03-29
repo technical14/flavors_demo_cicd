@@ -173,7 +173,6 @@ jobs:
                   xcodebuild clean build \
                     -workspace ios/Runner.xcworkspace \
                     -scheme $SCHEMA_NAME \
-                    -configuration Release-$SCHEMA_NAME \
                     -destination 'generic/platform=iOS' \
                     CODE_SIGN_STYLE=Manual \
                     CODE_SIGN_IDENTITY="Apple Development" \
