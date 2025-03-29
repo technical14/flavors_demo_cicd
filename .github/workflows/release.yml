@@ -126,6 +126,7 @@ jobs:
           APP_IDENTIFIER=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .app_identifier")
           TEAM_ID=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .team_id")
           PROFILE_BASE64=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .provisioning_profile_base64")
+          PROVISIONING_PROFILE_SPECIFIER=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .provisioning_profile_specifier")
           
           APP_NAME=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .app_name")
           SCHEMA_NAME=$(echo "$FLAVORS_JSON" | jq -r ".flavors[\"$FLAVOR\"] | .name")
@@ -142,6 +143,7 @@ jobs:
           echo "Team ID: $TEAM_ID"
           echo "Certificate base64: $CERT_BASE64"
           echo "Provisioning Profile: $PROFILE_BASE64"
+          echo "Provisioning Profile Specifier: $PROVISIONING_PROFILE_SPECIFIER"
 
           # Check if is_upload is true before proceeding with the build
           if [[ "$IS_IOS_UPLOAD" == "true" ]]; then
@@ -169,12 +171,12 @@ jobs:
                   # Build IPA
                   # Set environment variables for Xcode build
                   xcodebuild clean build \
-                    -workspace $APP_NAME.xcworkspace \
+                    -workspace ios/Runner.xcworkspace \
                     -scheme $SCHEMA_NAME \
                     -configuration Release \
                     -destination 'generic/platform=iOS' \
                     CODE_SIGN_IDENTITY="Apple Development" \
-                    PROVISIONING_PROFILE_SPECIFIER="iOS Team Provisioning Profile" \
+                    PROVISIONING_PROFILE_SPECIFIER="$PROVISIONING_PROFILE_SPECIFIER" \
                     DEVELOPMENT_TEAM="$TEAM_ID" \
                     -archivePath build/$APP_NAME.xcarchive
               else
