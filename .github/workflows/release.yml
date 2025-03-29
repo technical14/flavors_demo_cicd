@@ -54,7 +54,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.1'  # You can specify a specific Flutter version here, like '3.10.4' as per your Android Studio
+          flutter-version: '3.27.2'  # You can specify a specific Flutter version here, like '3.10.4' as per your Android Studio
 
       # Step 3: Set up Java 17
       - name: Set up Java 17
@@ -66,12 +66,7 @@ jobs:
 
       # Step 4: Clean Flutter project (optional, if you want a fresh build)
       - name: Clean Flutter project
-        run: |
-          rm -rf ios/Pods
-          rm -rf ios/.symlinks
-          rm -rf ios/Flutter/Flutter.podspec
-          rm -rf ~/Library/Developer/Xcode/DerivedData
-          flutter clean
+        run: flutter clean
 
       # Step 5: Get Flutter dependencies
       - name: Get Flutter dependencies
@@ -82,7 +77,7 @@ jobs:
         if: matrix.platform == 'ios'
         run: |
           cd ios
-          pod install --repo-update # Install dependencies
+          pod install # Install dependencies
 
       # Step 7: Set up Xcode (specific version)
       - name: Install Xcode 16.1 (Manual Setup)
@@ -107,15 +102,6 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           flutter pub get  # Get Flutter project dependencies
-          
-      - name: Build IOS Project
-        run: flutter build ios --release
-
-      # Step 9: Install CocoaPods dependencies
-      #      - name: Install CocoaPods dependencies
-      #        run: |
-      #          cd ios
-      #          pod install --repo-update
 
       #Step 8: Build IPA for flavor
       - name: Build APK for flavor ${{ matrix.flavor }}
