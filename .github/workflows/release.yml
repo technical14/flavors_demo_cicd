@@ -64,32 +64,20 @@ jobs:
           java-version: '17'  # Specify Java as per your Android Studio (gradle-7.5-all version wise change)
           distribution: 'temurin'  # Use AdoptOpenJDK distribution
 
-      - name: Clear Derived Data
-        run: |
-          rm -rf ~/Library/Developer/Xcode/DerivedData
-          rm -rf ~/Library/Caches/CocoaPods
+      # Step 4: Clean Flutter project (optional, if you want a fresh build)
+      - name: Clean Flutter project
+        run: flutter clean
 
-      - name: Install CocoaPods
-        run: |
-          sudo gem install cocoapods
-          pod repo update
+      # Step 5: Get Flutter dependencies
+      - name: Get Flutter dependencies
+        run: flutter pub get
 
-      - name: Install Dependencies
+      # Step 6: Install dependencies using CocoaPods
+      - name: Install Pods
+        if: matrix.platform == 'ios'
         run: |
-          flutter pub get
           cd ios
-          rm -rf Pods .symlinks Flutter
-          pod install --verbose
-          cd ..
-
-      - name: Ensure Flutter Framework is Generated
-        run: |
-          flutter precache --ios
-          flutter build ios-framework --no-debug --no-codesign
-
-      - name: Build iOS
-        run: |
-          flutter build ios --no-codesign
+          pod install  # Install dependencies
 
       # Step 7: Set up Xcode (specific version)
       - name: Install Xcode 16.1 (Manual Setup)
