@@ -172,9 +172,10 @@ jobs:
                   # Set environment variables for Xcode build
                   xcodebuild clean build \
                     -workspace ios/Runner.xcworkspace \
-                    -configuration Release-sandbox \
                     -scheme $SCHEMA_NAME \
+                    -configuration Release-sandbox \
                     -destination 'generic/platform=iOS' \
+                    -archivePath build/$SCHEMA_NAME.xcarchive \
                     CODE_SIGN_STYLE=Manual \
                     CODE_SIGN_IDENTITY="Apple Development" \
                     PROVISIONING_PROFILE_SPECIFIER="$PROVISIONING_PROFILE_SPECIFIER" \
